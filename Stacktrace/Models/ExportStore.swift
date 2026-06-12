@@ -16,7 +16,7 @@ enum ExportStore {
     static var directory: URL {
         let base = FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let dir = base.appendingPathComponent("Report/Exports", isDirectory: true)
+        let dir = base.appendingPathComponent("Stacktrace/Exports", isDirectory: true)
         try? FileManager.default.createDirectory(
             at: dir, withIntermediateDirectories: true)
         return dir

@@ -57,8 +57,17 @@ final class DataStore: ObservableObject {
     init() {
         let base = FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let dir = base.appendingPathComponent("Report", isDirectory: true)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let dir = base.appendingPathComponent("Stacktrace", isDirectory: true)
+
+        // One-time migration: move the old "Report" folder (data + exports) to
+        // "Stacktrace" so existing entries are preserved across the rename.
+        let legacy = base.appendingPathComponent("Report", isDirectory: true)
+        let fm = FileManager.default
+        if !fm.fileExists(atPath: dir.path), fm.fileExists(atPath: legacy.path) {
+            try? fm.moveItem(at: legacy, to: dir)
+        }
+
+        try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
         fileURL = dir.appendingPathComponent("data.json")
         backupURL = dir.appendingPathComponent("data.json.bak")
         load()

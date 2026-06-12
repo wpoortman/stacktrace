@@ -72,11 +72,11 @@ Drag it into `/Applications` to keep it.
 Entries are stored as JSON at:
 
 ```
-~/Library/Application Support/Report/data.json
+~/Library/Application Support/Stacktrace/data.json
 ```
 
 A `data.json.bak` backup is written on every save. Exported PDFs live in
-`~/Library/Application Support/Report/Exports/` (open them from the app's
+`~/Library/Application Support/Stacktrace/Exports/` (open them from the app's
 **Exports** view). Back up or move these files freely — deleting them is the
 only way to lose data.
 
@@ -91,8 +91,7 @@ brew install xcodegen
 xcodegen generate
 ```
 
-Source lives in the `Report/` directory (the original working name; the app
-ships as **Stacktrace**).
+Source lives in the `Stacktrace/` directory.
 
 ## License
 

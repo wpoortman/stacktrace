@@ -18,11 +18,11 @@ targets:
     type: application
     platform: macOS
     sources:
-      - path: Report
+      - path: Stacktrace
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.hyva.Stacktrace
         PRODUCT_NAME: Stacktrace
-        CODE_SIGN_ENTITLEMENTS: Report/Report.entitlements
+        CODE_SIGN_ENTITLEMENTS: Stacktrace/Stacktrace.entitlements
         INFOPLIST_KEY_CFBundleDisplayName: Stacktrace
         INFOPLIST_KEY_NSHumanReadableCopyright: ""

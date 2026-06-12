@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct ReportApp: App {
+struct StacktraceApp: App {
     @StateObject private var store = DataStore()
 
     var body: some Scene {
