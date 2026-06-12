@@ -95,6 +95,10 @@ xcodegen generate
 
 Source lives in the `Stacktrace/` directory.
 
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## License
 
 [GNU GPLv3](LICENSE)
