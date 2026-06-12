@@ -1,0 +1,28 @@
+name: Stacktrace
+options:
+  bundleIdPrefix: io.hyva
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    GENERATE_INFOPLIST_FILE: YES
+    ENABLE_HARDENED_RUNTIME: YES
+    CODE_SIGN_STYLE: Automatic
+    INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.productivity"
+targets:
+  Stacktrace:
+    type: application
+    platform: macOS
+    sources:
+      - path: Report
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.hyva.Stacktrace
+        PRODUCT_NAME: Stacktrace
+        CODE_SIGN_ENTITLEMENTS: Report/Report.entitlements
+        INFOPLIST_KEY_CFBundleDisplayName: Stacktrace
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""

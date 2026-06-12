@@ -2,68 +2,98 @@
 
 > Show progress, not hours.
 
-Stacktrace is a lightweight macOS application that helps you keep track of your work, accomplishments, and personal growth without resorting to traditional time tracking.
+A small, motivational macOS app for logging what you did each day — what you
+worked on, how it went, what went well, what didn't — and exporting a clean PDF
+report for any period (defaults to the current week).
 
-Instead of logging every minute of your day, Stacktrace helps you capture what matters:
-
-* What you worked on
-* What went well
-* What could have been improved
-* Important context and decisions
-* Achievements over time
-
-At the end of a day, week, month, or custom period, Stacktrace can generate a professional PDF report that provides a clear overview of your contributions and reflections.
-
-## Why?
-
-Many professionals dislike time tracking.
-
-Hours rarely tell the full story behind the work. A difficult problem may take ten minutes to solve after years of experience, while a simple task can consume an entire day.
-
-Stacktrace focuses on outcomes, context, and continuous improvement rather than hours spent.
+Not a time tracker. It's a daily work journal that's quick to fill in and turns
+your entries into a manager-ready report.
 
 ## Features
 
-* Create entries for any date
-* Add a title and description
-* Record what went well
-* Record what could have been done better
-* Track accomplishments and lessons learned
-* Generate PDF reports
-* Export reports for managers, performance reviews, retrospectives, or personal reflection
-* Designed specifically for macOS
+- **Daily entries** — title, description, what went well, what to improve, tags, and a one-tap mood (Rough → Great).
+- **Quick wins & setbacks** — log a one-liner without the full form.
+- **Dashboard** — current streak, weekly/total stats, average mood, and a GitHub-style contribution graph coloured by how each day went (orange → green) with streak milestones.
+- **Tags** — reusable tag catalogue; search entries by title or tag.
+- **PDF export** — grouped-by-day report for any date range, with an optional custom file name. All exports live in one place inside the app.
+- **AI polish (optional)** — clean up an entry's wording with your own OpenAI API key.
+- **Daily reminder (optional)** — a local notification nudging you to log your day.
+- **Local-first** — everything is stored in a plain JSON file on your Mac. Nothing leaves your machine (except AI requests, if you enable them).
 
-## Use Cases
+## Requirements
 
-### Performance Reviews
+- macOS 14 (Sonoma) or later
+- [Xcode 15](https://apps.apple.com/app/xcode/id497799835) or later (to build the app)
 
-Generate a summary of your work over the past quarter and bring concrete examples to performance conversations.
+## Install & run
 
-### One-on-One Meetings
+### Option 1 — Open in Xcode (recommended)
 
-Keep track of accomplishments, blockers, and learning moments.
+```bash
+git clone https://github.com/wpoortman/stacktrace.git
+cd stacktrace
+open Stacktrace.xcodeproj
+```
 
-### Personal Growth
+In Xcode:
 
-Build a history of your progress and see how you've evolved over time.
+1. Select the **Stacktrace** scheme (top toolbar).
+2. If you see a signing error, open the **Stacktrace** target → **Signing & Capabilities** and either pick your Apple ID team or set **Signing Certificate** to *Sign to Run Locally*.
+3. Press **Run** (⌘R). The app launches.
 
-### Team Retrospectives
+### Option 2 — Build a standalone .app from the command line
 
-Reflect on successes, challenges, and opportunities for improvement.
+```bash
+git clone https://github.com/wpoortman/stacktrace.git
+cd stacktrace
+xcodebuild -project Stacktrace.xcodeproj -scheme Stacktrace \
+  -configuration Release -derivedDataPath build build
+```
 
-## Philosophy
+The built app is at:
 
-A stack trace tells the story of how software arrived at a particular state.
+```
+build/Build/Products/Release/Stacktrace.app
+```
 
-Stacktrace does the same for your work.
+Drag it into `/Applications` to keep it.
 
-It helps you understand not only what happened, but how you got there.
+> First launch from Finder may show a Gatekeeper warning because the build is
+> not notarized. Right-click the app → **Open** → **Open** to allow it.
 
-## Roadmap
+## Optional setup
 
-* Tags and categories
-* Search and filtering
-* Attachments and screenshots
-* Goals and milestones
-* Calendar integrations
-* Team reporting
+- **AI enhancement** — open **Settings** (⌘,) → **AI**, paste an OpenAI API key from [platform.openai.com](https://platform.openai.com/api-keys), and click *Verify*. This is separate from a ChatGPT subscription and billed per use (fractions of a cent per enhance).
+- **Daily reminder** — **Settings** → **Reminders**: enable and pick a time. macOS will ask for notification permission.
+- **Visible weekdays** — **Settings** → **Days**: choose which weekdays show in the sidebar.
+
+## Your data
+
+Entries are stored as JSON at:
+
+```
+~/Library/Application Support/Report/data.json
+```
+
+A `data.json.bak` backup is written on every save. Exported PDFs live in
+`~/Library/Application Support/Report/Exports/` (open them from the app's
+**Exports** view). Back up or move these files freely — deleting them is the
+only way to lose data.
+
+## Developing
+
+The Xcode project is generated from `project.yml` with
+[XcodeGen](https://github.com/yonaskolb/XcodeGen). If you change the file layout or
+build settings, regenerate it:
+
+```bash
+brew install xcodegen
+xcodegen generate
+```
+
+Source lives in the `Report/` directory (the original working name; the app
+ships as **Stacktrace**).
+
+## License
+
+[GNU GPLv3](LICENSE)
