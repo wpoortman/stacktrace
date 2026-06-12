@@ -9,7 +9,7 @@ report for any period (defaults to the current week).
 Not a time tracker. It's a daily work journal that's quick to fill in and turns
 your entries into a manager-ready report.
 
-![Stacktrace dashboard](1.png)
+![Stacktrace dashboard](scrnshot-dashboard.png)
 
 ## Features
 
