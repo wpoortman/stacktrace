@@ -9,6 +9,8 @@ report for any period (defaults to the current week).
 Not a time tracker. It's a daily work journal that's quick to fill in and turns
 your entries into a manager-ready report.
 
+![Stacktrace dashboard](1.png)
+
 ## Features
 
 - **Daily entries** — title, description, what went well, what to improve, tags, and a one-tap mood (Rough → Great).
