@@ -409,7 +409,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = io.hyva.Stacktrace;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.wpoortman.stacktrace;
 				PRODUCT_NAME = Stacktrace;
 				SDKROOT = macosx;
 			};
@@ -427,7 +427,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = io.hyva.Stacktrace;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.wpoortman.stacktrace;
 				PRODUCT_NAME = Stacktrace;
 				SDKROOT = macosx;
 			};

@@ -4,7 +4,7 @@ import Security
 /// Minimal Keychain wrapper for storing secrets (the OpenAI API key) outside
 /// of plaintext defaults.
 enum Keychain {
-    private static let service = "io.hyva.Stacktrace"
+    private static let service = "io.github.wpoortman.stacktrace"
 
     static func set(_ value: String, account: String) {
         delete(account: account)

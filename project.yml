@@ -1,6 +1,6 @@
 name: Stacktrace
 options:
-  bundleIdPrefix: io.hyva
+  bundleIdPrefix: io.github.wpoortman
   deploymentTarget:
     macOS: "14.0"
   createIntermediateGroups: true
@@ -21,7 +21,7 @@ targets:
       - path: Stacktrace
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: io.hyva.Stacktrace
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.wpoortman.stacktrace
         PRODUCT_NAME: Stacktrace
         CODE_SIGN_ENTITLEMENTS: Stacktrace/Stacktrace.entitlements
         INFOPLIST_KEY_CFBundleDisplayName: Stacktrace
