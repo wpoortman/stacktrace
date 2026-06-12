@@ -20,6 +20,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
     case reminders
     case tags
     case ai
+    case storage
 
     var id: String { rawValue }
 
@@ -29,6 +30,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .reminders: return "Reminders"
         case .tags: return "Tags"
         case .ai: return "AI"
+        case .storage: return "Storage"
         }
     }
 
@@ -38,6 +40,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .reminders: return "bell"
         case .tags: return "tag"
         case .ai: return "sparkles"
+        case .storage: return "externaldrive"
         }
     }
 
@@ -48,6 +51,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .reminders: RemindersSettingsView()
         case .tags: TagsSettingsView()
         case .ai: AISettingsView()
+        case .storage: StorageSettingsView()
         }
     }
 }

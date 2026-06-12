@@ -50,31 +50,79 @@ private struct StoreFile: Codable {
 final class DataStore: ObservableObject {
     @Published private(set) var entries: [ReportEntry] = []
     @Published private(set) var tags: [String] = []
+    /// Published so the Settings UI updates when the folder changes.
+    @Published private(set) var directory: URL = StorageLocation.current
 
-    private let fileURL: URL
-    private let backupURL: URL
+    private var fileURL: URL { directory.appendingPathComponent("data.json") }
+    private var backupURL: URL { directory.appendingPathComponent("data.json.bak") }
 
     init() {
-        let base = FileManager.default
-            .urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let dir = base.appendingPathComponent("Stacktrace", isDirectory: true)
-
-        // One-time migration: move the old "Report" folder (data + exports) to
-        // "Stacktrace" so existing entries are preserved across the rename.
-        let legacy = base.appendingPathComponent("Report", isDirectory: true)
-        let fm = FileManager.default
-        if !fm.fileExists(atPath: dir.path), fm.fileExists(atPath: legacy.path) {
-            try? fm.moveItem(at: legacy, to: dir)
-        }
-
-        try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
-        fileURL = dir.appendingPathComponent("data.json")
-        backupURL = dir.appendingPathComponent("data.json.bak")
+        StorageLocation.activate()
+        directory = StorageLocation.current
+        migrateLegacyIfNeeded()
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         load()
     }
 
-    /// Folder holding the data file — handy to surface in the UI.
-    var directory: URL { fileURL.deletingLastPathComponent() }
+    /// One-time move of the old "Report" folder to the default "Stacktrace"
+    /// folder, only when using the default location.
+    private func migrateLegacyIfNeeded() {
+        guard directory == StorageLocation.defaultBase else { return }
+        let base = FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let legacy = base.appendingPathComponent("Report", isDirectory: true)
+        let fm = FileManager.default
+        if !fm.fileExists(atPath: directory.path), fm.fileExists(atPath: legacy.path) {
+            try? fm.moveItem(at: legacy, to: directory)
+        }
+    }
+
+    // MARK: - Storage location
+
+    /// Switch to a user-chosen folder (security-scoped, already accessible).
+    func setStorage(to url: URL) {
+        try? StorageLocation.saveBookmark(for: url)
+        relocate(to: url)
+    }
+
+    /// Revert to the default Application Support folder.
+    func resetStorage() {
+        StorageLocation.clearBookmark()
+        relocate(to: StorageLocation.defaultBase)
+    }
+
+    /// Copy existing data + exports into `newBase`, then read from there.
+    private func relocate(to newBase: URL) {
+        let fm = FileManager.default
+        let old = directory
+        try? fm.createDirectory(at: newBase, withIntermediateDirectories: true)
+
+        if old.standardizedFileURL != newBase.standardizedFileURL {
+            for name in ["data.json", "data.json.bak"] {
+                let src = old.appendingPathComponent(name)
+                let dst = newBase.appendingPathComponent(name)
+                if fm.fileExists(atPath: src.path) {
+                    try? fm.removeItem(at: dst)
+                    try? fm.copyItem(at: src, to: dst)
+                }
+            }
+            let srcEx = old.appendingPathComponent("Exports")
+            let dstEx = newBase.appendingPathComponent("Exports")
+            if fm.fileExists(atPath: srcEx.path),
+               let items = try? fm.contentsOfDirectory(at: srcEx, includingPropertiesForKeys: nil) {
+                try? fm.createDirectory(at: dstEx, withIntermediateDirectories: true)
+                for item in items {
+                    let dst = dstEx.appendingPathComponent(item.lastPathComponent)
+                    try? fm.removeItem(at: dst)
+                    try? fm.copyItem(at: item, to: dst)
+                }
+            }
+        }
+
+        StorageLocation.current = newBase
+        directory = newBase
+        load()
+    }
 
     // MARK: - Loading / saving
 

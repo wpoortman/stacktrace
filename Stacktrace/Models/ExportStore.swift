@@ -14,9 +14,7 @@ struct ExportFile: Identifiable, Equatable {
 /// means no Save dialog and an easy in-app list.
 enum ExportStore {
     static var directory: URL {
-        let base = FileManager.default
-            .urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let dir = base.appendingPathComponent("Stacktrace/Exports", isDirectory: true)
+        let dir = StorageLocation.current.appendingPathComponent("Exports", isDirectory: true)
         try? FileManager.default.createDirectory(
             at: dir, withIntermediateDirectories: true)
         return dir

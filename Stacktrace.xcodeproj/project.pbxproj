@@ -7,8 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0A46A500B71C0F661BB10AB6 /* StorageSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C47D1D94B14F044192A6C13 /* StorageSettingsView.swift */; };
 		100894C60318CC4C76D5372C /* EnhancementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FA49AFBA4385FFD46C04C9E /* EnhancementService.swift */; };
 		118696220428A34D302D270E /* EntryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F019CD06BA322758902943F3 /* EntryListView.swift */; };
+		161F015CC822D5FB784848E8 /* StorageLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9984BA5D0E1292D321276EA /* StorageLocation.swift */; };
 		23BFF34655884EC972AF1931 /* RemindersSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C055701BC659AA02031AB35 /* RemindersSettingsView.swift */; };
 		2BD883AF3C723C7D285453C9 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03DCA21DD77CEF2D15D1E171 /* Keychain.swift */; };
 		2F9FDE02CB0B226755E14713 /* TagChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DBCD4E57376D2917FCC3F0B /* TagChip.swift */; };
@@ -48,6 +50,7 @@
 		341DA48932786654057BF282 /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
 		367B3F8E44D744D5C6E05674 /* QuickAddBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAddBar.swift; sourceTree = "<group>"; };
 		378D1258E031C6A23A962A43 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		3C47D1D94B14F044192A6C13 /* StorageSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageSettingsView.swift; sourceTree = "<group>"; };
 		3DBCD4E57376D2917FCC3F0B /* TagChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagChip.swift; sourceTree = "<group>"; };
 		3F05F648BAA31CFA6D94C5CB /* DataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataStore.swift; sourceTree = "<group>"; };
 		41C384BF0ADBE6B9F12BD9C5 /* ExportsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportsView.swift; sourceTree = "<group>"; };
@@ -68,6 +71,7 @@
 		DE89C162EC4FB4D1F778DB34 /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
 		EF02BA1BC8B172FA05892DBA /* MoodKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodKit.swift; sourceTree = "<group>"; };
 		F019CD06BA322758902943F3 /* EntryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryListView.swift; sourceTree = "<group>"; };
+		F9984BA5D0E1292D321276EA /* StorageLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageLocation.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -131,6 +135,7 @@
 				207EAA17771384E5FB4B771E /* DaysSettingsView.swift */,
 				8C055701BC659AA02031AB35 /* RemindersSettingsView.swift */,
 				2826AA43A0ECC89415EA47E6 /* SettingsView.swift */,
+				3C47D1D94B14F044192A6C13 /* StorageSettingsView.swift */,
 				D6F587143C698A95D6581705 /* TagsSettingsView.swift */,
 			);
 			path = Settings;
@@ -144,6 +149,7 @@
 				AABFA4F98D14DD23B7CF386D /* ExportStore.swift */,
 				03DCA21DD77CEF2D15D1E171 /* Keychain.swift */,
 				93371C7D3A3175672888CD59 /* NotificationManager.swift */,
+				F9984BA5D0E1292D321276EA /* StorageLocation.swift */,
 				DAA4CC82AEF246B5E94FD23E /* WorkdayPreferences.swift */,
 			);
 			path = Models;
@@ -257,6 +263,8 @@
 				E203C91E21EE8140A8E6FB08 /* SearchView.swift in Sources */,
 				763B64F864087E86B13C37B5 /* SettingsView.swift in Sources */,
 				640AD62E555648E6AD3055B2 /* StacktraceApp.swift in Sources */,
+				161F015CC822D5FB784848E8 /* StorageLocation.swift in Sources */,
+				0A46A500B71C0F661BB10AB6 /* StorageSettingsView.swift in Sources */,
 				2F9FDE02CB0B226755E14713 /* TagChip.swift in Sources */,
 				7CF236BC15A8F6C07A0F8C90 /* TagsSettingsView.swift in Sources */,
 				FD7E6F97B67C8EDEF32E51DD /* WorkdayPreferences.swift in Sources */,
