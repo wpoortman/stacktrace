@@ -12,6 +12,7 @@
 		118696220428A34D302D270E /* EntryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F019CD06BA322758902943F3 /* EntryListView.swift */; };
 		161F015CC822D5FB784848E8 /* StorageLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9984BA5D0E1292D321276EA /* StorageLocation.swift */; };
 		23BFF34655884EC972AF1931 /* RemindersSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C055701BC659AA02031AB35 /* RemindersSettingsView.swift */; };
+		28DCFC5170E4EE1252213731 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2C9A75BF2F5858E69AB3EA6 /* MenuBarView.swift */; };
 		2BD883AF3C723C7D285453C9 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03DCA21DD77CEF2D15D1E171 /* Keychain.swift */; };
 		2F9FDE02CB0B226755E14713 /* TagChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DBCD4E57376D2917FCC3F0B /* TagChip.swift */; };
 		42D02C49545570E2605E329E /* DataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F05F648BAA31CFA6D94C5CB /* DataStore.swift */; };
@@ -64,6 +65,7 @@
 		AABFA4F98D14DD23B7CF386D /* ExportStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportStore.swift; sourceTree = "<group>"; };
 		B30D9AFA51E45D5E95E84A94 /* ReportHTMLBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportHTMLBuilder.swift; sourceTree = "<group>"; };
 		B5D07C90E2DFBBCFD5D7E9AE /* ConfettiView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfettiView.swift; sourceTree = "<group>"; };
+		D2C9A75BF2F5858E69AB3EA6 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		D42720143D9A85C1F4302997 /* EntryEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryEditorView.swift; sourceTree = "<group>"; };
 		D6F587143C698A95D6581705 /* TagsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagsSettingsView.swift; sourceTree = "<group>"; };
 		D927D34F368390111667CB32 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
@@ -101,6 +103,7 @@
 				F019CD06BA322758902943F3 /* EntryListView.swift */,
 				41C384BF0ADBE6B9F12BD9C5 /* ExportsView.swift */,
 				DE89C162EC4FB4D1F778DB34 /* FlowLayout.swift */,
+				D2C9A75BF2F5858E69AB3EA6 /* MenuBarView.swift */,
 				EF02BA1BC8B172FA05892DBA /* MoodKit.swift */,
 				367B3F8E44D744D5C6E05674 /* QuickAddBar.swift */,
 				294AAFB100356C4DCBEE1098 /* ReportView.swift */,
@@ -253,6 +256,7 @@
 				B3C3D4F0D52702E8282258D2 /* ExportsView.swift in Sources */,
 				BE464083E90ADFBEEFCBA8C8 /* FlowLayout.swift in Sources */,
 				2BD883AF3C723C7D285453C9 /* Keychain.swift in Sources */,
+				28DCFC5170E4EE1252213731 /* MenuBarView.swift in Sources */,
 				8B930E1DE986CDB3A38A89A0 /* MoodKit.swift in Sources */,
 				D382505A463DF48078A0DAD9 /* NotificationManager.swift in Sources */,
 				8470B63DA9AC22376CAE1AEF /* PDFReportGenerator.swift in Sources */,

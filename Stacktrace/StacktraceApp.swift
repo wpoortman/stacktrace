@@ -5,7 +5,7 @@ struct StacktraceApp: App {
     @StateObject private var store = DataStore()
 
     var body: some Scene {
-        WindowGroup {
+        Window("Stacktrace", id: "main") {
             ContentView()
                 .frame(minWidth: 820, minHeight: 560)
                 .environmentObject(store)
@@ -13,6 +13,12 @@ struct StacktraceApp: App {
         .commands {
             CommandGroup(replacing: .newItem) {}
         }
+
+        MenuBarExtra("Stacktrace", systemImage: "square.stack.fill") {
+            MenuBarView()
+                .environmentObject(store)
+        }
+        .menuBarExtraStyle(.window)
 
         Settings {
             SettingsView()
