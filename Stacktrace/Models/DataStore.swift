@@ -16,6 +16,9 @@ struct ReportEntry: Identifiable, Codable, Equatable {
     /// Set for a logged exercise activity (e.g. "Walk"), with `durationMinutes`.
     var exercise: String?
     var durationMinutes: Int?
+    /// Manual ordering within a day (set when the user drags to reorder).
+    /// nil falls back to creation time.
+    var sortOrder: Double?
     var createdAt: Date = Date()
 
     var isQuick: Bool { quickKind != nil }
@@ -216,7 +219,23 @@ final class DataStore: ObservableObject {
         let start = Calendar.current.startOfDay(for: day)
         return entries
             .filter { Calendar.current.isDate($0.date, inSameDayAs: start) }
-            .sorted { $0.createdAt < $1.createdAt }
+            .sorted { orderKey($0) < orderKey($1) }
+    }
+
+    private func orderKey(_ e: ReportEntry) -> Double {
+        e.sortOrder ?? e.createdAt.timeIntervalSinceReferenceDate
+    }
+
+    /// Reorder the entries of a day after a drag, persisting the new order.
+    func moveEntries(on day: Date, from source: IndexSet, to destination: Int) {
+        var dayEntries = entries(on: day)
+        dayEntries.move(fromOffsets: source, toOffset: destination)
+        for (i, e) in dayEntries.enumerated() {
+            if let idx = entries.firstIndex(where: { $0.id == e.id }) {
+                entries[idx].sortOrder = Double(i)
+            }
+        }
+        save()
     }
 
     func entries(from start: Date, to end: Date) -> [ReportEntry] {
