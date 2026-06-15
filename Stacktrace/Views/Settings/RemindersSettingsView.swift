@@ -6,6 +6,7 @@ struct RemindersSettingsView: View {
     @AppStorage(NotificationManager.enabledKey) private var enabled = false
     @AppStorage(NotificationManager.hourKey) private var hour = 17
     @AppStorage(NotificationManager.minuteKey) private var minute = 0
+    @AppStorage("endOfDayHour") private var endOfDayHour = 18
 
     /// Bridges the hour/minute defaults to a single Date for the picker.
     private var timeBinding: Binding<Date> {
@@ -36,6 +37,16 @@ struct RemindersSettingsView: View {
                 Text("Reminders")
             } footer: {
                 Text("A gentle nudge each day to log what you did. macOS will ask for notification permission the first time.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                Stepper("Ask after \(endOfDayHour):00", value: $endOfDayHour, in: 0...23)
+            } header: {
+                Text("End of day")
+            } footer: {
+                Text("When today is considered wrapped up — the dashboard then asks for an overall 1–10 score for the day.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

@@ -5,6 +5,7 @@ import SwiftUI
 struct DashboardView: View {
     @EnvironmentObject private var store: DataStore
     @AppStorage("lastCelebratedStreak") private var lastCelebrated = 0
+    @AppStorage("endOfDayHour") private var endOfDayHour = 18
     @State private var showConfetti = false
     @State private var confettiID = 0
     @State private var editingToday: ReportEntry?
@@ -36,7 +37,7 @@ struct DashboardView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     greeting
-                    if let day = store.dayNeedingRating() { ratingCard(day) }
+                    if let day = store.dayNeedingRating(endOfDayHour: endOfDayHour) { ratingCard(day) }
                     if let m = reachedMilestone { milestoneBanner(m) }
                     todayCard
                     if !store.routines.isEmpty { routinesCard }
