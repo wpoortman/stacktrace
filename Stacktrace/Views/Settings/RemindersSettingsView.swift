@@ -7,6 +7,7 @@ struct RemindersSettingsView: View {
     @AppStorage(NotificationManager.hourKey) private var hour = 17
     @AppStorage(NotificationManager.minuteKey) private var minute = 0
     @AppStorage("endOfDayHour") private var endOfDayHour = 18
+    @State private var testNote: String?
 
     /// Bridges the hour/minute defaults to a single Date for the picker.
     private var timeBinding: Binding<Date> {
@@ -47,6 +48,23 @@ struct RemindersSettingsView: View {
                 Text("End of day")
             } footer: {
                 Text("When today is considered wrapped up — the dashboard then asks for an overall 1–10 score for the day.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                Button("Send a test notification") {
+                    NotificationManager.sendTest { granted in
+                        testNote = granted
+                            ? "Sent — it appears in a couple of seconds."
+                            : "Notifications are blocked. Enable them for Stacktrace in System Settings → Notifications."
+                    }
+                }
+                if let testNote {
+                    Text(testNote).font(.caption).foregroundStyle(.secondary)
+                }
+            } footer: {
+                Text("Reminders fire at the set time going forward (not retroactively). Unsigned development builds may not deliver notifications.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

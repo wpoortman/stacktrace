@@ -1,9 +1,42 @@
 import Foundation
 import UserNotifications
 
+/// Presentation delegate so notifications also show while the app is frontmost.
+private final class NotifDelegate: NSObject, UNUserNotificationCenterDelegate {
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .sound, .list])
+    }
+}
+
 /// Schedules a single repeating daily local notification reminding the user to
 /// log their day. Preferences live in UserDefaults so they survive launches.
 enum NotificationManager {
+    private static let delegate = NotifDelegate()
+
+    /// Install the presentation delegate. Call once at launch.
+    static func configure() {
+        UNUserNotificationCenter.current().delegate = delegate
+    }
+
+    /// Fire a sample notification a few seconds from now so the user can see
+    /// what a reminder looks like and confirm permission is granted.
+    static func sendTest(_ result: @escaping (Bool) -> Void) {
+        configure()
+        let center = UNUserNotificationCenter.current()
+        center.requestAuthorization(options: [.alert, .sound]) { granted, _ in
+            DispatchQueue.main.async { result(granted) }
+            guard granted else { return }
+            let content = UNMutableNotificationContent()
+            content.title = "Stacktrace"
+            content.body = "This is what a reminder looks like."
+            content.sound = .default
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 3, repeats: false)
+            center.add(UNNotificationRequest(identifier: "test-\(UUID().uuidString)",
+                                             content: content, trigger: trigger))
+        }
+    }
     static let enabledKey = "reminderEnabled"
     static let hourKey = "reminderHour"
     static let minuteKey = "reminderMinute"

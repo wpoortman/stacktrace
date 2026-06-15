@@ -55,6 +55,7 @@ struct ContentView: View {
             }
         }
         .onAppear {
+            NotificationManager.configure()
             NotificationManager.refresh()
             NotificationManager.refreshRoutines(store.routines)
         }

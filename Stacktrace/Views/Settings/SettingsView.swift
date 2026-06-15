@@ -16,6 +16,7 @@ struct SettingsView: View {
 }
 
 enum SettingsPane: String, CaseIterable, Identifiable {
+    case general
     case days
     case routines
     case reminders
@@ -27,6 +28,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
+        case .general: return "General"
         case .days: return "Days"
         case .routines: return "Routines"
         case .reminders: return "Reminders"
@@ -38,6 +40,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
 
     var systemImage: String {
         switch self {
+        case .general: return "gearshape"
         case .days: return "calendar"
         case .routines: return "figure.walk"
         case .reminders: return "bell"
@@ -50,6 +53,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
     @ViewBuilder
     var content: some View {
         switch self {
+        case .general: GeneralSettingsView()
         case .days: DaysSettingsView()
         case .routines: RoutinesSettingsView()
         case .reminders: RemindersSettingsView()
