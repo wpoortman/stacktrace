@@ -27,7 +27,9 @@ struct EntryListView: View {
                 List {
                     ForEach(entries) { entry in
                         Group {
-                            if entry.isQuick {
+                            if entry.isExercise {
+                                ExerciseRow(entry: entry) { store.delete(entry) }
+                            } else if entry.isQuick {
                                 QuickItemRow(entry: entry) { store.delete(entry) }
                             } else if entry.isCheckin {
                                 CheckinRow(entry: entry) { store.delete(entry) }

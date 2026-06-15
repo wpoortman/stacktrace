@@ -21,6 +21,12 @@ struct DashboardView: View {
         return store.entriesCount(from: week.start, to: lastDay)
     }
 
+    private var weekActiveMinutes: Int {
+        let week = Calendar.current.weekInterval(for: Date())
+        let lastDay = Calendar.current.date(byAdding: .day, value: -1, to: week.end) ?? week.start
+        return store.activeMinutes(from: week.start, to: lastDay)
+    }
+
     private var reachedMilestone: Int? {
         milestones.filter { $0 <= streak }.max()
     }
@@ -30,8 +36,10 @@ struct DashboardView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     greeting
+                    if let day = store.dayNeedingRating() { ratingCard(day) }
                     if let m = reachedMilestone { milestoneBanner(m) }
                     todayCard
+                    if !store.routines.isEmpty { routinesCard }
 
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: 4),
                               spacing: 14) {
@@ -45,6 +53,10 @@ struct DashboardView: View {
                                  value: "\(store.totalEntries)", unit: store.totalEntries == 1 ? "entry" : "entries",
                                  symbol: "tray.full.fill", tint: .purple)
                         moodCard
+                        StatCard(title: "Active this week",
+                                 value: "\(weekActiveMinutes)", unit: "min",
+                                 symbol: "figure.run", tint: Color(red: 0.20, green: 0.62, blue: 0.86))
+                        dayScoreCard
                     }
 
                     ContributionGraph(stats: store.dayStats())
@@ -91,6 +103,17 @@ struct DashboardView: View {
         if streak == 0 { return "Log what you did today to start a streak." }
         if !todayLogged { return "Log today to keep your \(streak)-day streak alive." }
         return "Nice — today's in. Keep the momentum."
+    }
+
+    private var dayScoreCard: some View {
+        let avg = store.averageDayRating
+        return StatCard(
+            title: "Avg day score",
+            value: avg.map { String(format: "%.1f", $0) } ?? "—",
+            unit: avg != nil ? "/ 10" : "no ratings",
+            symbol: "star.fill",
+            tint: avg.map { MoodColor.color(forScore: 1 + ($0 - 1) / 9 * 4) } ?? .secondary
+        )
     }
 
     private var moodCard: some View {
@@ -184,6 +207,106 @@ struct DashboardView: View {
                 withAnimation { showConfetti = false }
             }
         }
+    }
+
+    // MARK: Routines
+
+    private var routinesCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Move a little", systemImage: "figure.walk")
+                .font(.headline)
+            ForEach(store.routines) { routine in
+                RoutineRow(routine: routine)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(nsColor: .controlBackgroundColor),
+                    in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.secondary.opacity(0.12)))
+    }
+
+    // MARK: Day rating prompt
+
+    private func ratingCard(_ day: Date) -> some View {
+        let isToday = Calendar.current.isDateInToday(day)
+        let label = isToday ? "today" : DateFormat.dayHeader.string(from: day)
+        return VStack(alignment: .leading, spacing: 10) {
+            Text("How was \(label) overall?")
+                .font(.headline)
+            Text("Give the whole day a score from 1 to 10.")
+                .font(.caption).foregroundStyle(.secondary)
+            HStack(spacing: 6) {
+                ForEach(1...10, id: \.self) { n in
+                    Button {
+                        store.setDayRating(n, for: day)
+                    } label: {
+                        Text("\(n)")
+                            .font(.callout.weight(.semibold))
+                            .frame(maxWidth: .infinity, minHeight: 34)
+                            .background(score10Color(n).opacity(0.18),
+                                        in: RoundedRectangle(cornerRadius: 8))
+                            .foregroundStyle(score10Color(n))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.accentColor.opacity(0.25)))
+    }
+
+    /// Map 1…10 onto the orange→green mood ramp.
+    private func score10Color(_ n: Int) -> Color {
+        MoodColor.color(forScore: 1 + Double(n - 1) / 9 * 4)
+    }
+}
+
+private struct RoutineRow: View {
+    let routine: Routine
+    @EnvironmentObject private var store: DataStore
+
+    private var today: Date { Calendar.current.startOfDay(for: Date()) }
+    private var count: Int { store.completions(routine, on: today) }
+    private var done: Bool { store.isDone(routine, on: today) }
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: done ? "checkmark.circle.fill" : "circle")
+                .font(.title3)
+                .foregroundStyle(done ? .green : .secondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(routine.name).font(.callout.weight(.medium))
+                Text(routine.cadenceLabel).font(.caption2).foregroundStyle(.secondary)
+            }
+            Spacer()
+            if routine.isHourly {
+                Text("\(count)/\(routine.dailyTarget)")
+                    .font(.callout.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                if count > 0 {
+                    Button { store.undoCompletion(routine, on: today) } label: {
+                        Image(systemName: "minus.circle")
+                    }
+                    .buttonStyle(.borderless)
+                }
+                Button { store.logCompletion(routine, on: today) } label: {
+                    Image(systemName: "plus.circle.fill")
+                }
+                .buttonStyle(.borderless)
+            } else {
+                Button {
+                    if done { store.undoCompletion(routine, on: today) }
+                    else { store.logCompletion(routine, on: today) }
+                } label: {
+                    Text(done ? "Undo" : "Done")
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+        .padding(.vertical, 4)
     }
 }
 

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0A46A500B71C0F661BB10AB6 /* StorageSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C47D1D94B14F044192A6C13 /* StorageSettingsView.swift */; };
 		100894C60318CC4C76D5372C /* EnhancementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FA49AFBA4385FFD46C04C9E /* EnhancementService.swift */; };
+		11646834899BB9020D27312E /* Routine.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF218961BEE7FEC8FC56AA80 /* Routine.swift */; };
 		118696220428A34D302D270E /* EntryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F019CD06BA322758902943F3 /* EntryListView.swift */; };
 		161F015CC822D5FB784848E8 /* StorageLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9984BA5D0E1292D321276EA /* StorageLocation.swift */; };
 		23BFF34655884EC972AF1931 /* RemindersSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C055701BC659AA02031AB35 /* RemindersSettingsView.swift */; };
@@ -26,6 +27,7 @@
 		8B930E1DE986CDB3A38A89A0 /* MoodKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF02BA1BC8B172FA05892DBA /* MoodKit.swift */; };
 		8C6E0EDAA4F9E2A7C8A94E1C /* ReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 294AAFB100356C4DCBEE1098 /* ReportView.swift */; };
 		920BCB50031666E35D299D0E /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D927D34F368390111667CB32 /* DashboardView.swift */; };
+		A0BB0CADA686A76AE1E2EA19 /* RoutinesSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8127DB32628AE7F6E01F1F11 /* RoutinesSettingsView.swift */; };
 		B3C3D4F0D52702E8282258D2 /* ExportsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41C384BF0ADBE6B9F12BD9C5 /* ExportsView.swift */; };
 		B66FA697E6D7A49AD454C9BF /* QuickAddBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 367B3F8E44D744D5C6E05674 /* QuickAddBar.swift */; };
 		BA55479BDDD9C0CD0E6C66B8 /* DateHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 641A4285502FA2852045C95C /* DateHelpers.swift */; };
@@ -60,6 +62,7 @@
 		641A4285502FA2852045C95C /* DateHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateHelpers.swift; sourceTree = "<group>"; };
 		7B234934E78F46837198D113 /* PDFReportGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFReportGenerator.swift; sourceTree = "<group>"; };
 		7FA49AFBA4385FFD46C04C9E /* EnhancementService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancementService.swift; sourceTree = "<group>"; };
+		8127DB32628AE7F6E01F1F11 /* RoutinesSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutinesSettingsView.swift; sourceTree = "<group>"; };
 		8C055701BC659AA02031AB35 /* RemindersSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersSettingsView.swift; sourceTree = "<group>"; };
 		93371C7D3A3175672888CD59 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		AABFA4F98D14DD23B7CF386D /* ExportStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportStore.swift; sourceTree = "<group>"; };
@@ -72,6 +75,7 @@
 		DAA4CC82AEF246B5E94FD23E /* WorkdayPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkdayPreferences.swift; sourceTree = "<group>"; };
 		DE89C162EC4FB4D1F778DB34 /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
 		EF02BA1BC8B172FA05892DBA /* MoodKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoodKit.swift; sourceTree = "<group>"; };
+		EF218961BEE7FEC8FC56AA80 /* Routine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Routine.swift; sourceTree = "<group>"; };
 		F019CD06BA322758902943F3 /* EntryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryListView.swift; sourceTree = "<group>"; };
 		F9984BA5D0E1292D321276EA /* StorageLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageLocation.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -137,6 +141,7 @@
 				0C50FF190994C2A09DF3F49A /* AISettingsView.swift */,
 				207EAA17771384E5FB4B771E /* DaysSettingsView.swift */,
 				8C055701BC659AA02031AB35 /* RemindersSettingsView.swift */,
+				8127DB32628AE7F6E01F1F11 /* RoutinesSettingsView.swift */,
 				2826AA43A0ECC89415EA47E6 /* SettingsView.swift */,
 				3C47D1D94B14F044192A6C13 /* StorageSettingsView.swift */,
 				D6F587143C698A95D6581705 /* TagsSettingsView.swift */,
@@ -152,6 +157,7 @@
 				AABFA4F98D14DD23B7CF386D /* ExportStore.swift */,
 				03DCA21DD77CEF2D15D1E171 /* Keychain.swift */,
 				93371C7D3A3175672888CD59 /* NotificationManager.swift */,
+				EF218961BEE7FEC8FC56AA80 /* Routine.swift */,
 				F9984BA5D0E1292D321276EA /* StorageLocation.swift */,
 				DAA4CC82AEF246B5E94FD23E /* WorkdayPreferences.swift */,
 			);
@@ -264,6 +270,8 @@
 				23BFF34655884EC972AF1931 /* RemindersSettingsView.swift in Sources */,
 				FCF7BF28DA38B3897C66A6E7 /* ReportHTMLBuilder.swift in Sources */,
 				8C6E0EDAA4F9E2A7C8A94E1C /* ReportView.swift in Sources */,
+				11646834899BB9020D27312E /* Routine.swift in Sources */,
+				A0BB0CADA686A76AE1E2EA19 /* RoutinesSettingsView.swift in Sources */,
 				E203C91E21EE8140A8E6FB08 /* SearchView.swift in Sources */,
 				763B64F864087E86B13C37B5 /* SettingsView.swift in Sources */,
 				640AD62E555648E6AD3055B2 /* StacktraceApp.swift in Sources */,

@@ -17,6 +17,7 @@ struct SettingsView: View {
 
 enum SettingsPane: String, CaseIterable, Identifiable {
     case days
+    case routines
     case reminders
     case tags
     case ai
@@ -27,6 +28,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .days: return "Days"
+        case .routines: return "Routines"
         case .reminders: return "Reminders"
         case .tags: return "Tags"
         case .ai: return "AI"
@@ -37,6 +39,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
     var systemImage: String {
         switch self {
         case .days: return "calendar"
+        case .routines: return "figure.walk"
         case .reminders: return "bell"
         case .tags: return "tag"
         case .ai: return "sparkles"
@@ -48,6 +51,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
     var content: some View {
         switch self {
         case .days: DaysSettingsView()
+        case .routines: RoutinesSettingsView()
         case .reminders: RemindersSettingsView()
         case .tags: TagsSettingsView()
         case .ai: AISettingsView()

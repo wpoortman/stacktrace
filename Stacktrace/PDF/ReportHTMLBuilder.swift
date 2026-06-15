@@ -3,12 +3,20 @@ import Foundation
 /// Builds the printable HTML for a report covering a date range.
 /// Entries are grouped under day headers, clean professional layout.
 enum ReportHTMLBuilder {
-    static func html(entries: [ReportEntry], from start: Date, to end: Date) -> String {
+    static func html(entries: [ReportEntry],
+                     routines: [Routine] = [],
+                     routineLogs: [RoutineLog] = [],
+                     dayRatings: [DayRating] = [],
+                     from start: Date, to end: Date) -> String {
         let cal = Calendar.current
 
         // Group by start-of-day, then sort each group by creation order.
         let grouped = Dictionary(grouping: entries) { cal.startOfDay(for: $0.date) }
-        let days = grouped.keys.sorted()
+        let logsByDay = Dictionary(grouping: routineLogs) { cal.startOfDay(for: $0.day) }
+        let routineName = Dictionary(routines.map { ($0.id, $0.name) }) { a, _ in a }
+        let ratingByDay = Dictionary(dayRatings.map { (cal.startOfDay(for: $0.day), $0.score) }) { a, _ in a }
+
+        let days = Set(grouped.keys).union(logsByDay.keys).sorted()
 
         let rangeLabel = "\(DateFormat.short.string(from: start)) – \(DateFormat.short.string(from: end))"
 
@@ -20,15 +28,20 @@ enum ReportHTMLBuilder {
                 let dayEntries = (grouped[day] ?? []).sorted { $0.createdAt < $1.createdAt }
                 body += "<section class=\"day\">"
                 body += "<h2>\(DateFormat.dayHeader.string(from: day).htmlEscaped)</h2>"
+                if let score = ratingByDay[day] {
+                    body += "<p class=\"dayscore\">Overall day score: <strong>\(score)/10</strong></p>"
+                }
                 for entry in dayEntries {
                     body += entryHTML(entry)
                 }
+                body += movementHTML(logsByDay[day] ?? [], names: routineName, order: routines)
                 body += "</section>"
             }
         }
 
         let count = entries.count
-        let summary = "\(count) \(count == 1 ? "entry" : "entries") across \(days.count) \(days.count == 1 ? "day" : "days")"
+        let dayCount = days.count
+        let summary = "\(count) \(count == 1 ? "entry" : "entries") across \(dayCount) \(dayCount == 1 ? "day" : "days")"
 
         return """
         <!DOCTYPE html>
@@ -51,7 +64,31 @@ enum ReportHTMLBuilder {
         """
     }
 
+    /// "Movement: Stand & stretch ✓ · Walk ×3" for a day's routine completions.
+    private static func movementHTML(_ logs: [RoutineLog],
+                                     names: [UUID: String],
+                                     order: [Routine]) -> String {
+        guard !logs.isEmpty else { return "" }
+        var counts: [UUID: Int] = [:]
+        for log in logs { counts[log.routineID, default: 0] += 1 }
+        var parts: [String] = []
+        for routine in order {
+            guard let n = counts[routine.id], n > 0 else { continue }
+            let label = (names[routine.id] ?? "Routine").htmlEscaped
+            parts.append(n == 1 ? "\(label) ✓" : "\(label) ×\(n)")
+        }
+        guard !parts.isEmpty else { return "" }
+        return "<p class=\"movement\"><strong>Movement:</strong> \(parts.joined(separator: " · "))</p>"
+    }
+
     private static func entryHTML(_ entry: ReportEntry) -> String {
+        // Exercise activity — render compactly, not as a titled entry.
+        if entry.isExercise {
+            let name = (entry.exercise ?? "Exercise").htmlEscaped
+            let mins = entry.durationMinutes.map { " — \($0) min" } ?? ""
+            return "<p class=\"movement\"><strong>Exercise:</strong> \(name)\(mins)</p>"
+        }
+
         var parts = "<article class=\"entry\">"
         let title = entry.title.isEmpty ? "Untitled" : entry.title
         parts += "<h3>\(title.htmlEscaped)</h3>"
@@ -139,6 +176,9 @@ enum ReportHTMLBuilder {
     }
     .detail { margin: 0 0 8px; }
     .mood { margin: 0 0 6px; color: #555; font-size: 11px; }
+    .dayscore { margin: -4px 0 10px; color: #3a3a8c; font-size: 11px; }
+    .movement { margin: 6px 0 0; color: #1e7a36; font-size: 11px;
+      background: #eaf7ee; padding: 5px 9px; border-radius: 5px; }
     .note {
       padding: 6px 10px;
       border-radius: 5px;

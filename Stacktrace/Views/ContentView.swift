@@ -54,7 +54,10 @@ struct ContentView: View {
                     .navigationTitle(DateFormat.dayHeader.string(from: selectedDate))
             }
         }
-        .onAppear { NotificationManager.refresh() }
+        .onAppear {
+            NotificationManager.refresh()
+            NotificationManager.refreshRoutines(store.routines)
+        }
         .searchable(text: $searchText, placement: .sidebar,
                     prompt: "Search title or tag")
         .sheet(isPresented: $showingReport) {

@@ -46,4 +46,39 @@ enum NotificationManager {
         let request = UNNotificationRequest(identifier: requestID, content: content, trigger: trigger)
         center.add(request)
     }
+
+    // MARK: - Routine reminders
+
+    private static let routinePrefix = "routine-"
+
+    /// Reschedule reminders for all routines. Daily routines fire once at their
+    /// start hour; hourly routines fire each hour within their window.
+    static func refreshRoutines(_ routines: [Routine]) {
+        let center = UNUserNotificationCenter.current()
+        center.getPendingNotificationRequests { pending in
+            let stale = pending.map(\.identifier).filter { $0.hasPrefix(routinePrefix) }
+            center.removePendingNotificationRequests(withIdentifiers: stale)
+
+            let active = routines.filter { $0.remind }
+            guard !active.isEmpty else { return }
+            center.requestAuthorization(options: [.alert, .sound]) { granted, _ in
+                guard granted else { return }
+                for routine in active {
+                    let hours = routine.isHourly
+                        ? Array(routine.startHour...max(routine.startHour, routine.endHour))
+                        : [routine.startHour]
+                    for h in hours {
+                        let content = UNMutableNotificationContent()
+                        content.title = "Time to move"
+                        content.body = routine.name
+                        content.sound = .default
+                        var comps = DateComponents(); comps.hour = h; comps.minute = 0
+                        let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: true)
+                        let id = "\(routinePrefix)\(routine.id.uuidString)-\(h)"
+                        center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+                    }
+                }
+            }
+        }
+    }
 }

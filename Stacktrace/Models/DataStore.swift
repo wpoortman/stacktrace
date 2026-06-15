@@ -13,9 +13,13 @@ struct ReportEntry: Identifiable, Codable, Equatable {
     var mood: Int?
     /// nil = full entry. "win" or "fail" = lightweight quick item (just `detail`).
     var quickKind: String?
+    /// Set for a logged exercise activity (e.g. "Walk"), with `durationMinutes`.
+    var exercise: String?
+    var durationMinutes: Int?
     var createdAt: Date = Date()
 
     var isQuick: Bool { quickKind != nil }
+    var isExercise: Bool { exercise != nil }
 
     /// A one-tap mood check-in: carries only a mood, no text or tags.
     var isCheckin: Bool {
@@ -36,10 +40,48 @@ struct ReportEntry: Identifiable, Codable, Equatable {
     }
 }
 
-/// On-disk shape of the data file.
+/// An overall 1–10 rating of how a whole day went (not per-entry mood).
+struct DayRating: Identifiable, Codable, Equatable {
+    var id = UUID()
+    var day: Date    // start-of-day
+    var score: Int   // 1...10
+    var at: Date
+
+    init(day: Date, score: Int) {
+        self.id = UUID()
+        self.day = Calendar.current.startOfDay(for: day)
+        self.score = min(10, max(1, score))
+        self.at = Date()
+    }
+}
+
+/// On-disk shape of the data file. Decoding tolerates older files that lack
+/// newer keys so upgrades never wipe data.
 private struct StoreFile: Codable {
     var entries: [ReportEntry] = []
     var tags: [String] = []
+    var routines: [Routine] = []
+    var routineLogs: [RoutineLog] = []
+    var dayRatings: [DayRating] = []
+
+    init(entries: [ReportEntry], tags: [String],
+         routines: [Routine], routineLogs: [RoutineLog],
+         dayRatings: [DayRating]) {
+        self.entries = entries
+        self.tags = tags
+        self.routines = routines
+        self.routineLogs = routineLogs
+        self.dayRatings = dayRatings
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        entries = try c.decodeIfPresent([ReportEntry].self, forKey: .entries) ?? []
+        tags = try c.decodeIfPresent([String].self, forKey: .tags) ?? []
+        routines = try c.decodeIfPresent([Routine].self, forKey: .routines) ?? []
+        routineLogs = try c.decodeIfPresent([RoutineLog].self, forKey: .routineLogs) ?? []
+        dayRatings = try c.decodeIfPresent([DayRating].self, forKey: .dayRatings) ?? []
+    }
 }
 
 /// File-backed store. All entries and the tag catalog live in a single JSON
@@ -50,6 +92,9 @@ private struct StoreFile: Codable {
 final class DataStore: ObservableObject {
     @Published private(set) var entries: [ReportEntry] = []
     @Published private(set) var tags: [String] = []
+    @Published private(set) var routines: [Routine] = []
+    @Published private(set) var routineLogs: [RoutineLog] = []
+    @Published private(set) var dayRatings: [DayRating] = []
     /// Published so the Settings UI updates when the folder changes.
     @Published private(set) var directory: URL = StorageLocation.current
 
@@ -135,18 +180,27 @@ final class DataStore: ObservableObject {
             if let file = try? decoder.decode(StoreFile.self, from: data) {
                 entries = file.entries
                 tags = file.tags
+                routines = file.routines
+                routineLogs = file.routineLogs
+                dayRatings = file.dayRatings
                 return
             }
         }
         entries = []
         tags = []
+        routines = []
+        routineLogs = []
+        dayRatings = []
     }
 
     private func save() {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
-        guard let data = try? encoder.encode(StoreFile(entries: entries, tags: tags)) else { return }
+        let file = StoreFile(entries: entries, tags: tags,
+                             routines: routines, routineLogs: routineLogs,
+                             dayRatings: dayRatings)
+        guard let data = try? encoder.encode(file) else { return }
 
         // Roll the current file to .bak before overwriting.
         if FileManager.default.fileExists(atPath: fileURL.path) {
@@ -212,6 +266,21 @@ final class DataStore: ObservableObject {
         upsert(e)
     }
 
+    /// Log an exercise activity (name + minutes).
+    func addExercise(_ name: String, minutes: Int, on day: Date = Date()) {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        var e = ReportEntry(date: day)
+        e.exercise = trimmed
+        e.durationMinutes = max(1, minutes)
+        upsert(e)
+    }
+
+    /// Total logged exercise minutes in a date range.
+    func activeMinutes(from start: Date, to end: Date) -> Int {
+        entries(from: start, to: end).compactMap { $0.durationMinutes }.reduce(0, +)
+    }
+
     func hasEntries(on day: Date) -> Bool {
         let start = Calendar.current.startOfDay(for: day)
         return entries.contains { Calendar.current.isDate($0.date, inSameDayAs: start) }
@@ -250,6 +319,90 @@ final class DataStore: ObservableObject {
             entries[j].tags.removeAll { $0 == name }
         }
         save()
+    }
+
+    // MARK: - Routines
+
+    func upsertRoutine(_ routine: Routine) {
+        if let i = routines.firstIndex(where: { $0.id == routine.id }) {
+            routines[i] = routine
+        } else {
+            routines.append(routine)
+        }
+        save()
+        NotificationManager.refreshRoutines(routines)
+    }
+
+    func deleteRoutine(_ routine: Routine) {
+        routines.removeAll { $0.id == routine.id }
+        routineLogs.removeAll { $0.routineID == routine.id }
+        save()
+        NotificationManager.refreshRoutines(routines)
+    }
+
+    /// Times a routine was completed on a given day.
+    func completions(_ routine: Routine, on day: Date) -> Int {
+        let start = Calendar.current.startOfDay(for: day)
+        return routineLogs.filter {
+            $0.routineID == routine.id && Calendar.current.isDate($0.day, inSameDayAs: start)
+        }.count
+    }
+
+    func isDone(_ routine: Routine, on day: Date) -> Bool {
+        completions(routine, on: day) >= routine.dailyTarget
+    }
+
+    func logCompletion(_ routine: Routine, on day: Date = Date()) {
+        routineLogs.append(RoutineLog(routineID: routine.id, day: day))
+        save()
+    }
+
+    /// Remove the most recent completion for a routine on a day (undo).
+    func undoCompletion(_ routine: Routine, on day: Date = Date()) {
+        let start = Calendar.current.startOfDay(for: day)
+        if let idx = routineLogs.lastIndex(where: {
+            $0.routineID == routine.id && Calendar.current.isDate($0.day, inSameDayAs: start)
+        }) {
+            routineLogs.remove(at: idx)
+            save()
+        }
+    }
+
+    // MARK: - Day rating (overall 1–10)
+
+    func dayRating(for day: Date) -> Int? {
+        let start = Calendar.current.startOfDay(for: day)
+        return dayRatings.first { Calendar.current.isDate($0.day, inSameDayAs: start) }?.score
+    }
+
+    func setDayRating(_ score: Int, for day: Date) {
+        let start = Calendar.current.startOfDay(for: day)
+        dayRatings.removeAll { Calendar.current.isDate($0.day, inSameDayAs: start) }
+        dayRatings.append(DayRating(day: start, score: score))
+        save()
+    }
+
+    var averageDayRating: Double? {
+        guard !dayRatings.isEmpty else { return nil }
+        return Double(dayRatings.map(\.score).reduce(0, +)) / Double(dayRatings.count)
+    }
+
+    /// The day the app should prompt to rate: the oldest recent logged day
+    /// missing a rating, or today once the end-of-day hour has passed.
+    func dayNeedingRating(asOf now: Date = Date(), endOfDayHour: Int = 18) -> Date? {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: now)
+        // Catch up on the last 3 days you logged but didn't rate (oldest first).
+        for offset in stride(from: 3, through: 1, by: -1) {
+            guard let day = cal.date(byAdding: .day, value: -offset, to: today) else { continue }
+            if hasEntries(on: day), dayRating(for: day) == nil { return day }
+        }
+        // Today, once it's wrapping up.
+        let hour = cal.component(.hour, from: now)
+        if hour >= endOfDayHour, hasEntries(on: today), dayRating(for: today) == nil {
+            return today
+        }
+        return nil
     }
 
     // MARK: - Dashboard stats

@@ -100,7 +100,19 @@ struct ReportView: View {
         let url = ExportStore.uniqueURL(baseName: resolvedBaseName())
 
         isGenerating = true
-        let html = ReportHTMLBuilder.html(entries: entries, from: startDate, to: endDate)
+        let reportRoutines = store.routines.filter { $0.includeInReport }
+        let ids = Set(reportRoutines.map(\.id))
+        let lo = Calendar.current.startOfDay(for: startDate)
+        let hi = Calendar.current.startOfDay(for: endDate)
+        let logs = store.routineLogs.filter {
+            ids.contains($0.routineID) && $0.day >= lo && $0.day <= hi
+        }
+        let ratings = store.dayRatings.filter { $0.day >= lo && $0.day <= hi }
+        let html = ReportHTMLBuilder.html(entries: entries,
+                                          routines: reportRoutines,
+                                          routineLogs: logs,
+                                          dayRatings: ratings,
+                                          from: startDate, to: endDate)
         let gen = PDFReportGenerator()
         generator = gen
         gen.generate(html: html, to: url) { result in
