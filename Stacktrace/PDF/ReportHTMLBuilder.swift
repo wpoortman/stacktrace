@@ -81,12 +81,25 @@ enum ReportHTMLBuilder {
         return "<p class=\"movement\"><strong>Movement:</strong> \(parts.joined(separator: " · "))</p>"
     }
 
+    private static let moodEmoji = ["🌧️", "☁️", "⛅️", "☀️", "✨"]
+
     private static func entryHTML(_ entry: ReportEntry) -> String {
-        // Exercise activity — render compactly, not as a titled entry.
+        // Compact activity items — no title, render with an icon like the app.
         if entry.isExercise {
             let name = (entry.exercise ?? "Exercise").htmlEscaped
             let mins = entry.durationMinutes.map { " — \($0) min" } ?? ""
-            return "<p class=\"movement\"><strong>Exercise:</strong> \(name)\(mins)</p>"
+            return "<p class=\"item\">🏃 \(name)\(mins)</p>"
+        }
+        if entry.quickKind == "win" {
+            return "<p class=\"item\">🎉 \(entry.detail.htmlEscaped)</p>"
+        }
+        if entry.quickKind == "fail" {
+            return "<p class=\"item\">⚠️ \(entry.detail.htmlEscaped)</p>"
+        }
+        if entry.isCheckin, let m = entry.mood {
+            let i = max(1, min(5, m)) - 1
+            let labels = ["Rough", "Tough", "Okay", "Good", "Great"]
+            return "<p class=\"item\">\(moodEmoji[i]) Felt \(labels[i].lowercased())</p>"
         }
 
         var parts = "<article class=\"entry\">"
@@ -94,7 +107,7 @@ enum ReportHTMLBuilder {
         if entry.isMeeting {
             let name = (entry.title.isEmpty ? "Meeting" : entry.title).htmlEscaped
             let tag = (entry.happened ?? true) ? "Meeting" : "Meeting (didn't happen)"
-            parts += "<h3>\(name) <span class=\"meeting-tag\">\(tag)</span></h3>"
+            parts += "<h3>👥 \(name) <span class=\"meeting-tag\">\(tag)</span></h3>"
         } else {
             let title = entry.title.isEmpty ? "Untitled" : entry.title
             parts += "<h3>\(title.htmlEscaped)</h3>"
@@ -182,6 +195,7 @@ enum ReportHTMLBuilder {
       margin-right: 4px;
     }
     .detail { margin: 0 0 8px; }
+    .item { margin: 4px 0 8px 12px; font-size: 12.5px; }
     .mood { margin: 0 0 6px; color: #555; font-size: 11px; }
     .dayscore { margin: -4px 0 10px; color: #3a3a8c; font-size: 11px; }
     .meeting-tag { font-size: 9px; font-weight: 600; color: #3a3a8c;
