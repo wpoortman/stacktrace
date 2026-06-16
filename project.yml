@@ -13,6 +13,8 @@ settings:
     ENABLE_HARDENED_RUNTIME: YES
     CODE_SIGN_STYLE: Automatic
     INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.productivity"
+    INFOPLIST_KEY_NSCalendarsUsageDescription: "Stacktrace reads your calendar so you can reflect on the day's meetings."
+    INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription: "Stacktrace reads your calendar so you can reflect on the day's meetings."
 targets:
   Stacktrace:
     type: application

@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 /// Daily reminder preferences. Toggling or changing the time reschedules the
 /// local notification.
@@ -54,10 +55,11 @@ struct RemindersSettingsView: View {
 
             Section {
                 Button("Send a test notification") {
-                    NotificationManager.sendTest { granted in
-                        testNote = granted
-                            ? "Sent — it appears in a couple of seconds."
-                            : "Notifications are blocked. Enable them for Stacktrace in System Settings → Notifications."
+                    NotificationManager.sendTest { note in testNote = note }
+                }
+                Button("Open Notification Settings") {
+                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.notifications") {
+                        NSWorkspace.shared.open(url)
                     }
                 }
                 if let testNote {

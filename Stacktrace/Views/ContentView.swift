@@ -1,12 +1,15 @@
 import SwiftUI
 
+enum MainPanel {
+    case dashboard, activity, meetings, day, exports
+}
+
 struct ContentView: View {
     @EnvironmentObject private var store: DataStore
     @State private var selectedDate: Date = Calendar.current.startOfDay(for: Date())
     @State private var showingReport = false
     @State private var showCalendar = false
-    @State private var showingExports = false
-    @State private var showingDashboard = true
+    @State private var panel: MainPanel = .dashboard
     @State private var searchText = ""
     @State private var tagFilter: Set<String> = []
 
@@ -42,16 +45,18 @@ struct ContentView: View {
                     selectedDate = Calendar.current.startOfDay(for: date)
                     searchText = ""
                     tagFilter = []
-                    showingExports = false
-                    showingDashboard = false
+                    panel = .day
                 }
-            } else if showingDashboard {
-                DashboardView()
-            } else if showingExports {
-                ExportsView()
             } else {
-                EntryListView(day: selectedDate)
-                    .navigationTitle(DateFormat.dayHeader.string(from: selectedDate))
+                switch panel {
+                case .dashboard: DashboardView()
+                case .activity: ActivityView()
+                case .meetings: MeetingsView()
+                case .exports: ExportsView()
+                case .day:
+                    EntryListView(day: selectedDate)
+                        .navigationTitle(DateFormat.dayHeader.string(from: selectedDate))
+                }
             }
         }
         .onAppear {
@@ -63,7 +68,7 @@ struct ContentView: View {
                     prompt: "Search title or tag")
         .sheet(isPresented: $showingReport) {
             ReportView(initialDate: selectedDate) {
-                showingExports = true
+                panel = .exports
             }
         }
     }
@@ -71,21 +76,41 @@ struct ContentView: View {
     private func selectDay(_ day: Date) {
         guard day <= Calendar.current.startOfDay(for: Date()) else { return }
         selectedDate = Calendar.current.startOfDay(for: day)
-        showingExports = false
-        showingDashboard = false
+        panel = .day
+    }
+
+    private func navButton(_ title: String, _ symbol: String,
+                           _ color: Color, _ target: MainPanel) -> some View {
+        Button {
+            panel = target
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: symbol)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 22, height: 22)
+                    .background(color, in: RoundedRectangle(cornerRadius: 6))
+                Text(title)
+                Spacer()
+            }
+            .padding(.vertical, 4)
+            .padding(.horizontal, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(panel == target ? Color.accentColor.opacity(0.18) : .clear,
+                        in: RoundedRectangle(cornerRadius: 7))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Button {
-                showingDashboard = true
-                showingExports = false
-            } label: {
-                Label("Dashboard", systemImage: "square.grid.2x2.fill")
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(spacing: 2) {
+                navButton("Dashboard", "square.grid.2x2.fill", .blue, .dashboard)
+                navButton("Activity", "figure.run", .green, .activity)
+                navButton("Meetings", "person.2.fill", .indigo, .meetings)
+                navButton("Exports", "tray.full.fill", .gray, .exports)
             }
-            .buttonStyle(.bordered)
-            .tint(showingDashboard ? .accentColor : nil)
 
             HStack {
                 Text("THIS WEEK")
@@ -106,8 +131,7 @@ struct ContentView: View {
                         .labelsHidden()
                         .padding()
                         .onChange(of: selectedDate) { _, _ in
-                            showingExports = false
-                            showingDashboard = false
+                            panel = .day
                             showCalendar = false
                         }
                 }
@@ -125,20 +149,6 @@ struct ContentView: View {
                     }
                 }
             }
-
-            Divider()
-
-            Divider()
-
-            Button {
-                showingExports = true
-                showingDashboard = false
-            } label: {
-                Label("Exports", systemImage: "tray.full")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .buttonStyle(.bordered)
-            .tint(showingExports ? .accentColor : nil)
 
             Spacer()
 

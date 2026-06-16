@@ -19,10 +19,14 @@ struct ReportEntry: Identifiable, Codable, Equatable {
     /// Manual ordering within a day (set when the user drags to reorder).
     /// nil falls back to creation time.
     var sortOrder: Double?
+    /// Set for a meeting reflection sourced from the calendar.
+    var eventID: String?
+    var happened: Bool?
     var createdAt: Date = Date()
 
     var isQuick: Bool { quickKind != nil }
     var isExercise: Bool { exercise != nil }
+    var isMeeting: Bool { eventID != nil }
 
     /// A one-tap mood check-in: carries only a mood, no text or tags.
     var isCheckin: Bool {
@@ -298,6 +302,24 @@ final class DataStore: ObservableObject {
     /// Total logged exercise minutes in a date range.
     func activeMinutes(from start: Date, to end: Date) -> Int {
         entries(from: start, to: end).compactMap { $0.durationMinutes }.reduce(0, +)
+    }
+
+    /// Log a meeting reflection sourced from the calendar.
+    func addMeeting(eventID: String, title: String, happened: Bool,
+                    wentWell: String, wentBad: String, mood: Int?, on day: Date) {
+        var e = ReportEntry(date: day)
+        e.eventID = eventID
+        e.title = title
+        e.happened = happened
+        e.wentWell = wentWell
+        e.wentBad = wentBad
+        e.mood = mood
+        upsert(e)
+    }
+
+    /// Calendar event IDs already reflected on for a day (to avoid re-prompting).
+    func loggedMeetingIDs(on day: Date) -> Set<String> {
+        Set(entries(on: day).compactMap { $0.eventID })
     }
 
     func hasEntries(on day: Date) -> Bool {

@@ -174,11 +174,9 @@ struct EntryEditorView: View {
                 Text(placeholder)
                     .foregroundStyle(.tertiary)
                     .padding(.top, 8)
-                    .padding(.leading, 5)
+                    .padding(.leading, 7)
             }
-            TextEditor(text: text)
-                .font(.body)
-                .scrollContentBackground(.hidden)
+            SpellCheckTextEditor(text: text)
                 .padding(4)
         }
         .frame(height: height)

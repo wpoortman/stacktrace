@@ -101,7 +101,7 @@ private struct QuickComposeSheet: View {
 }
 
 /// Simple wizard to log an exercise: pick one and set how long.
-private struct ExerciseWizard: View {
+struct ExerciseWizard: View {
     let day: Date
     @EnvironmentObject private var store: DataStore
     @Environment(\.dismiss) private var dismiss

@@ -29,7 +29,9 @@ struct EntryListView: View {
                 List {
                     ForEach(entries) { entry in
                         Group {
-                            if entry.isExercise {
+                            if entry.isMeeting {
+                                MeetingRow(entry: entry) { store.delete(entry) }
+                            } else if entry.isExercise {
                                 ExerciseRow(entry: entry) { store.delete(entry) }
                             } else if entry.isQuick {
                                 QuickItemRow(entry: entry) { store.delete(entry) }
@@ -58,6 +60,8 @@ struct EntryListView: View {
                     .onMove { store.moveEntries(on: day, from: $0, to: $1) }
                 }
             }
+
+            MeetingsReview(day: day)
 
             if !isFuture {
                 Divider()

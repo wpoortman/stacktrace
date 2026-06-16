@@ -20,21 +20,42 @@ enum NotificationManager {
         UNUserNotificationCenter.current().delegate = delegate
     }
 
-    /// Fire a sample notification a few seconds from now so the user can see
-    /// what a reminder looks like and confirm permission is granted.
-    static func sendTest(_ result: @escaping (Bool) -> Void) {
+    /// Fire a sample notification so the user can see what a reminder looks
+    /// like. Reports a precise message about what happened.
+    static func sendTest(_ result: @escaping (String) -> Void) {
         configure()
         let center = UNUserNotificationCenter.current()
-        center.requestAuthorization(options: [.alert, .sound]) { granted, _ in
-            DispatchQueue.main.async { result(granted) }
-            guard granted else { return }
-            let content = UNMutableNotificationContent()
-            content.title = "Stacktrace"
-            content.body = "This is what a reminder looks like."
-            content.sound = .default
-            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 3, repeats: false)
-            center.add(UNNotificationRequest(identifier: "test-\(UUID().uuidString)",
-                                             content: content, trigger: trigger))
+        func report(_ s: String) { DispatchQueue.main.async { result(s) } }
+
+        center.getNotificationSettings { settings in
+            if settings.authorizationStatus == .denied {
+                report("Notifications are turned off for Stacktrace. Enable them in System Settings → Notifications.")
+                return
+            }
+            center.requestAuthorization(options: [.alert, .sound]) { granted, error in
+                if let error {
+                    report("Error: \(error.localizedDescription)")
+                    return
+                }
+                guard granted else {
+                    report("Permission wasn't granted. Unsigned development builds often can't get notification access — try a signed build in /Applications.")
+                    return
+                }
+                let content = UNMutableNotificationContent()
+                content.title = "Stacktrace"
+                content.body = "This is what a reminder looks like."
+                content.sound = .default
+                let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
+                let request = UNNotificationRequest(identifier: "test-\(UUID().uuidString)",
+                                                    content: content, trigger: trigger)
+                center.add(request) { addError in
+                    if let addError {
+                        report("Couldn't schedule: \(addError.localizedDescription)")
+                    } else {
+                        report("Sent — it appears in a couple of seconds.")
+                    }
+                }
+            }
         }
     }
     static let enabledKey = "reminderEnabled"

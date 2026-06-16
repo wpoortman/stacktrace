@@ -19,6 +19,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
     case general
     case days
     case routines
+    case calendar
     case reminders
     case tags
     case ai
@@ -31,6 +32,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .general: return "General"
         case .days: return "Days"
         case .routines: return "Routines"
+        case .calendar: return "Calendar"
         case .reminders: return "Reminders"
         case .tags: return "Tags"
         case .ai: return "AI"
@@ -43,6 +45,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .general: return "gearshape"
         case .days: return "calendar"
         case .routines: return "figure.walk"
+        case .calendar: return "calendar.badge.clock"
         case .reminders: return "bell"
         case .tags: return "tag"
         case .ai: return "sparkles"
@@ -56,6 +59,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .general: GeneralSettingsView()
         case .days: DaysSettingsView()
         case .routines: RoutinesSettingsView()
+        case .calendar: CalendarSettingsView()
         case .reminders: RemindersSettingsView()
         case .tags: TagsSettingsView()
         case .ai: AISettingsView()

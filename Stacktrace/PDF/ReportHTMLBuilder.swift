@@ -90,8 +90,15 @@ enum ReportHTMLBuilder {
         }
 
         var parts = "<article class=\"entry\">"
-        let title = entry.title.isEmpty ? "Untitled" : entry.title
-        parts += "<h3>\(title.htmlEscaped)</h3>"
+
+        if entry.isMeeting {
+            let name = (entry.title.isEmpty ? "Meeting" : entry.title).htmlEscaped
+            let tag = (entry.happened ?? true) ? "Meeting" : "Meeting (didn't happen)"
+            parts += "<h3>\(name) <span class=\"meeting-tag\">\(tag)</span></h3>"
+        } else {
+            let title = entry.title.isEmpty ? "Untitled" : entry.title
+            parts += "<h3>\(title.htmlEscaped)</h3>"
+        }
 
         if !entry.tags.isEmpty {
             parts += "<div class=\"tags\">"
@@ -177,6 +184,8 @@ enum ReportHTMLBuilder {
     .detail { margin: 0 0 8px; }
     .mood { margin: 0 0 6px; color: #555; font-size: 11px; }
     .dayscore { margin: -4px 0 10px; color: #3a3a8c; font-size: 11px; }
+    .meeting-tag { font-size: 9px; font-weight: 600; color: #3a3a8c;
+      background: #e9e9f7; padding: 1px 6px; border-radius: 8px; vertical-align: middle; }
     .movement { margin: 6px 0 0; color: #1e7a36; font-size: 11px;
       background: #eaf7ee; padding: 5px 9px; border-radius: 5px; }
     .note {

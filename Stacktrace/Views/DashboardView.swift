@@ -40,7 +40,6 @@ struct DashboardView: View {
                     if let day = store.dayNeedingRating(endOfDayHour: endOfDayHour) { ratingCard(day) }
                     if let m = reachedMilestone { milestoneBanner(m) }
                     todayCard
-                    if !store.routines.isEmpty { routinesCard }
 
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: 4),
                               spacing: 14) {
@@ -210,23 +209,6 @@ struct DashboardView: View {
         }
     }
 
-    // MARK: Routines
-
-    private var routinesCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Move a little", systemImage: "figure.walk")
-                .font(.headline)
-            ForEach(store.routines) { routine in
-                RoutineRow(routine: routine)
-            }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(nsColor: .controlBackgroundColor),
-                    in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.secondary.opacity(0.12)))
-    }
-
     // MARK: Day rating prompt
 
     private func ratingCard(_ day: Date) -> some View {
@@ -265,7 +247,7 @@ struct DashboardView: View {
     }
 }
 
-private struct RoutineRow: View {
+struct RoutineRow: View {
     let routine: Routine
     @EnvironmentObject private var store: DataStore
 
