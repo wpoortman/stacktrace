@@ -94,7 +94,7 @@ enum ReportHTMLBuilder {
             return "<p class=\"item\">🎉 \(entry.detail.htmlEscaped)</p>"
         }
         if entry.quickKind == "fail" {
-            return "<p class=\"item\">⚠️ \(entry.detail.htmlEscaped)</p>"
+            return "<p class=\"item\">🔸 \(entry.detail.htmlEscaped)</p>"
         }
         if entry.isCheckin, let m = entry.mood {
             let i = max(1, min(5, m)) - 1
@@ -107,7 +107,7 @@ enum ReportHTMLBuilder {
         if entry.isMeeting {
             let name = (entry.title.isEmpty ? "Meeting" : entry.title).htmlEscaped
             let tag = (entry.happened ?? true) ? "Meeting" : "Meeting (didn't happen)"
-            parts += "<h3>👥 \(name) <span class=\"meeting-tag\">\(tag)</span></h3>"
+            parts += "<h3>📅 \(name) <span class=\"meeting-tag\">\(tag)</span></h3>"
         } else {
             let title = entry.title.isEmpty ? "Untitled" : entry.title
             parts += "<h3>\(title.htmlEscaped)</h3>"
@@ -131,10 +131,10 @@ enum ReportHTMLBuilder {
             parts += "<p class=\"detail\">\(entry.detail.htmlParagraphs)</p>"
         }
         if !entry.wentWell.isEmpty {
-            parts += block(label: "What went well", text: entry.wentWell, cls: "well")
+            parts += block(label: "🔹 What went well", text: entry.wentWell, cls: "well")
         }
         if !entry.wentBad.isEmpty {
-            parts += block(label: "What went bad / to improve", text: entry.wentBad, cls: "bad")
+            parts += block(label: "🔸 What went bad / to improve", text: entry.wentBad, cls: "bad")
         }
         parts += "</article>"
         return parts
@@ -209,8 +209,8 @@ enum ReportHTMLBuilder {
     }
     .note p { margin: 2px 0 0; }
     .note-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
-    .note.well { background: #eaf7ee; }
-    .note.well .note-label { color: #1e7a36; }
+    .note.well { background: #e9eef9; }
+    .note.well .note-label { color: #2b50b5; }
     .note.bad { background: #fdf0e8; }
     .note.bad .note-label { color: #b5530f; }
     .empty { color: #6e6e73; font-style: italic; }

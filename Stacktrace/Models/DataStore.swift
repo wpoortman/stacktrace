@@ -322,6 +322,73 @@ final class DataStore: ObservableObject {
         Set(entries(on: day).compactMap { $0.eventID })
     }
 
+    // MARK: - Backup / restore
+
+    private struct BackupFile: Codable { var name: String; var base64: String }
+    private struct BackupBundle: Codable {
+        var version = 1
+        var data: String              // data.json contents
+        var settingsPlist: String     // base64 plist of app preferences
+        var exports: [BackupFile]
+    }
+
+    private static let backupSettingsKeys = [
+        "reminderEnabled", "reminderHour", "reminderMinute", "endOfDayHour",
+        "calendarEnabled", "selectedWeekdays", "openAIModel", "lastCelebratedStreak",
+    ]
+
+    private func encodedStoreData() -> Data {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+        let file = StoreFile(entries: entries, tags: tags, routines: routines,
+                             routineLogs: routineLogs, dayRatings: dayRatings)
+        return (try? encoder.encode(file)) ?? Data()
+    }
+
+    /// Build a single backup file containing entries, settings, and exports.
+    func makeBackup() throws -> Data {
+        let dataStr = String(data: encodedStoreData(), encoding: .utf8) ?? "{}"
+
+        var settings: [String: Any] = [:]
+        for key in Self.backupSettingsKeys {
+            if let v = UserDefaults.standard.object(forKey: key) { settings[key] = v }
+        }
+        let plist = try PropertyListSerialization.data(fromPropertyList: settings, format: .xml, options: 0)
+
+        let exports = ExportStore.list().map { file -> BackupFile in
+            let bytes = (try? Data(contentsOf: file.url)) ?? Data()
+            return BackupFile(name: file.url.lastPathComponent, base64: bytes.base64EncodedString())
+        }
+
+        let bundle = BackupBundle(data: dataStr,
+                                  settingsPlist: plist.base64EncodedString(),
+                                  exports: exports)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted]
+        return try encoder.encode(bundle)
+    }
+
+    /// Replace current entries, settings, and exports from a backup file.
+    func restore(from data: Data) throws {
+        let bundle = try JSONDecoder().decode(BackupBundle.self, from: data)
+
+        if let d = bundle.data.data(using: .utf8) {
+            try d.write(to: fileURL, options: .atomic)
+        }
+        if let sd = Data(base64Encoded: bundle.settingsPlist),
+           let dict = try PropertyListSerialization.propertyList(from: sd, options: [], format: nil) as? [String: Any] {
+            for (k, v) in dict { UserDefaults.standard.set(v, forKey: k) }
+        }
+        let dir = ExportStore.directory
+        for file in bundle.exports {
+            if let bytes = Data(base64Encoded: file.base64) {
+                try? bytes.write(to: dir.appendingPathComponent(file.name))
+            }
+        }
+        load()
+    }
+
     func hasEntries(on day: Date) -> Bool {
         let start = Calendar.current.startOfDay(for: day)
         return entries.contains { Calendar.current.isDate($0.date, inSameDayAs: start) }
