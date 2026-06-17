@@ -4,6 +4,7 @@ import Charts
 /// Visual trends over the last few weeks: day score, mood, and active minutes.
 struct TrendsView: View {
     @EnvironmentObject private var store: DataStore
+    @EnvironmentObject private var pro: ProManager
 
     private let daysBack = 42   // 6 weeks
 
@@ -31,6 +32,15 @@ struct TrendsView: View {
     }
 
     var body: some View {
+        if !pro.isPro {
+            ProLockedView(feature: "Trends")
+                .navigationTitle("Trends")
+        } else {
+            chartsBody
+        }
+    }
+
+    private var chartsBody: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 if points.allSatisfy({ $0.score == nil && $0.mood == nil && $0.minutes == 0 }) {

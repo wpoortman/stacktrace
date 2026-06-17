@@ -24,6 +24,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
     case tags
     case ai
     case storage
+    case license
 
     var id: String { rawValue }
 
@@ -37,6 +38,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .tags: return "Tags"
         case .ai: return "AI"
         case .storage: return "Storage"
+        case .license: return "Pro"
         }
     }
 
@@ -50,6 +52,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .tags: return "tag"
         case .ai: return "sparkles"
         case .storage: return "externaldrive"
+        case .license: return "star.circle"
         }
     }
 
@@ -64,6 +67,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .tags: TagsSettingsView()
         case .ai: AISettingsView()
         case .storage: StorageSettingsView()
+        case .license: ProSettingsView()
         }
     }
 }
