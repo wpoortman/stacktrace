@@ -1,17 +1,40 @@
 import SwiftUI
 
-/// App preferences. Future-proof: each pane is a `SettingsPane` case with its
-/// own view — add a case and a view to grow the window, nothing else changes.
+/// App preferences in a grouped sidebar (no tab overflow). Add a case to
+/// `SettingsPane` and place it in a group below.
 struct SettingsView: View {
+    @State private var selection: SettingsPane = .general
+
+    private struct Group: Identifiable {
+        let title: String
+        let panes: [SettingsPane]
+        var id: String { title }
+    }
+    private let groups = [
+        Group(title: "App", panes: [.general, .storage, .license]),
+        Group(title: "Logging", panes: [.days, .tags]),
+        Group(title: "Schedule", panes: [.routines, .calendar, .reminders]),
+        Group(title: "Assist", panes: [.ai]),
+    ]
+
     var body: some View {
-        TabView {
-            ForEach(SettingsPane.allCases) { pane in
-                pane.content
-                    .tabItem { Label(pane.title, systemImage: pane.systemImage) }
-                    .tag(pane)
+        NavigationSplitView {
+            List(selection: $selection) {
+                ForEach(groups) { group in
+                    Section(group.title) {
+                        ForEach(group.panes) { pane in
+                            Label(pane.title, systemImage: pane.systemImage)
+                                .tag(pane)
+                        }
+                    }
+                }
             }
+            .navigationSplitViewColumnWidth(190)
+        } detail: {
+            selection.content
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(width: 500, height: 440)
+        .frame(width: 740, height: 500)
     }
 }
 
