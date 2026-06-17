@@ -18,12 +18,17 @@ struct ActivityView: View {
         store.entries(on: today).filter { $0.isExercise }
     }
 
+    private var todayRoutines: [Routine] {
+        store.routines.filter { $0.runsOn(today) }
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 exerciseCard
-                if !store.routines.isEmpty { routinesCard }
-                else { routinesEmpty }
+                if store.routines.isEmpty { routinesEmpty }
+                else if todayRoutines.isEmpty { routinesRestDay }
+                else { routinesCard }
             }
             .padding(24)
         }
@@ -69,7 +74,7 @@ struct ActivityView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Move a little", systemImage: "figure.walk")
                 .font(.headline)
-            ForEach(store.routines) { routine in
+            ForEach(todayRoutines) { routine in
                 RoutineRow(routine: routine)
             }
         }
@@ -83,5 +88,10 @@ struct ActivityView: View {
     private var routinesEmpty: some View {
         ContentUnavailableView("No routines yet", systemImage: "figure.walk",
             description: Text("Add movement routines in Settings → Routines to track them here."))
+    }
+
+    private var routinesRestDay: some View {
+        ContentUnavailableView("No routines today", systemImage: "figure.walk",
+            description: Text("None of your routines run today. Enjoy the rest."))
     }
 }

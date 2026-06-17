@@ -97,6 +97,10 @@ private struct ExportRow: View {
             Spacer()
             Button("Open", action: onOpen)
                 .buttonStyle(.borderedProminent)
+            ShareLink(item: file.url) {
+                Image(systemName: "square.and.arrow.up")
+            }
+            .help("Share")
             Button {
                 onReveal()
             } label: {

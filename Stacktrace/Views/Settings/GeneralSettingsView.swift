@@ -8,6 +8,14 @@ struct GeneralSettingsView: View {
     @State private var failed = false
     @State private var backupNote: String?
 
+    @AppStorage("didOnboard") private var didOnboard = false
+    @AppStorage(AutoExport.enabledKey) private var autoExport = false
+    @AppStorage(AutoExport.frequencyKey) private var autoFrequency = "weekly"
+    @AppStorage(AutoExport.weekdayKey) private var autoWeekday = 2
+    @AppStorage(AutoExport.hourKey) private var autoHour = 18
+
+    private let weekdayOrder = [2, 3, 4, 5, 6, 7, 1]
+
     var body: some View {
         Form {
             Section {
@@ -21,12 +29,38 @@ struct GeneralSettingsView: View {
                         .font(.caption)
                         .foregroundStyle(.red)
                 }
+                Button("Show onboarding again") { didOnboard = false }
             } header: {
                 Text("General")
             } footer: {
                 Text("Open Stacktrace automatically when you log in to your Mac.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+
+            Section {
+                Toggle("Automatic export", isOn: $autoExport)
+                if autoExport {
+                    Picker("Frequency", selection: $autoFrequency) {
+                        Text("Weekly").tag("weekly")
+                        Text("Monthly").tag("monthly")
+                    }
+                    if autoFrequency == "weekly" {
+                        Picker("On", selection: $autoWeekday) {
+                            ForEach(weekdayOrder, id: \.self) { wd in
+                                Text(Calendar.current.weekdaySymbols[wd - 1]).tag(wd)
+                            }
+                        }
+                    }
+                    Stepper("At \(autoHour):00", value: $autoHour, in: 0...23)
+                }
+            } header: {
+                Text("Automatic export")
+            } footer: {
+                Text(autoFrequency == "weekly"
+                     ? "On launch, Stacktrace exports the previous week's PDF into Exports when the chosen day/time has passed."
+                     : "On launch, Stacktrace exports the previous month's PDF into Exports at the start of each month.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
 
             Section {

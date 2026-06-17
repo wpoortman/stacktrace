@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum MainPanel {
-    case dashboard, activity, meetings, day, exports
+    case dashboard, activity, meetings, trends, day, exports
 }
 
 struct ContentView: View {
@@ -12,6 +12,7 @@ struct ContentView: View {
     @State private var panel: MainPanel = .dashboard
     @State private var searchText = ""
     @State private var tagFilter: Set<String> = []
+    @AppStorage("didOnboard") private var didOnboard = false
 
     private var isSearching: Bool {
         !searchText.trimmingCharacters(in: .whitespaces).isEmpty || !tagFilter.isEmpty
@@ -52,6 +53,7 @@ struct ContentView: View {
                 case .dashboard: DashboardView()
                 case .activity: ActivityView()
                 case .meetings: MeetingsView()
+                case .trends: TrendsView()
                 case .exports: ExportsView()
                 case .day:
                     EntryListView(day: selectedDate)
@@ -63,6 +65,10 @@ struct ContentView: View {
             NotificationManager.configure()
             NotificationManager.refresh()
             NotificationManager.refreshRoutines(store.routines)
+            AutoExport.runIfDue(store: store)
+        }
+        .sheet(isPresented: .init(get: { !didOnboard }, set: { _ in })) {
+            OnboardingView()
         }
         .searchable(text: $searchText, placement: .sidebar,
                     prompt: "Search title or tag")
@@ -109,6 +115,7 @@ struct ContentView: View {
                 navButton("Dashboard", "square.grid.2x2.fill", .blue, .dashboard)
                 navButton("Activity", "figure.run", .green, .activity)
                 navButton("Meetings", "person.2.fill", .indigo, .meetings)
+                navButton("Trends", "chart.xyaxis.line", .orange, .trends)
                 navButton("Exports", "tray.full.fill", .gray, .exports)
             }
 

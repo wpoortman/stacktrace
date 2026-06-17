@@ -118,18 +118,27 @@ enum NotificationManager {
             center.requestAuthorization(options: [.alert, .sound]) { granted, _ in
                 guard granted else { return }
                 for routine in active {
-                    let hours = routine.isHourly
-                        ? Array(routine.startHour...max(routine.startHour, routine.endHour))
-                        : [routine.startHour]
-                    for h in hours {
-                        let content = UNMutableNotificationContent()
-                        content.title = "Time to move"
-                        content.body = routine.name
-                        content.sound = .default
-                        var comps = DateComponents(); comps.hour = h; comps.minute = 0
-                        let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: true)
-                        let id = "\(routinePrefix)\(routine.id.uuidString)-\(h)"
-                        center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+                    // nil/all-7 weekdays => fire every day (no weekday component).
+                    let weekdays: [Int?]
+                    if let wd = routine.weekdays, !wd.isEmpty, wd.count < 7 {
+                        weekdays = wd.map { Optional($0) }
+                    } else {
+                        weekdays = [nil]
+                    }
+                    for slot in routine.slots {
+                        for wd in weekdays {
+                            let content = UNMutableNotificationContent()
+                            content.title = "Time to move"
+                            content.body = routine.name
+                            content.sound = .default
+                            var comps = DateComponents()
+                            comps.hour = slot.hour
+                            comps.minute = slot.minute
+                            if let wd { comps.weekday = wd }
+                            let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: true)
+                            let id = "\(routinePrefix)\(routine.id.uuidString)-\(wd.map(String.init) ?? "x")-\(slot.hour)-\(slot.minute)"
+                            center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+                        }
                     }
                 }
             }

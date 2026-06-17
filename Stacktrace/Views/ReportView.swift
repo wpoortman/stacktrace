@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 /// Sheet to choose a date range and export a PDF report.
 /// Defaults to the calendar week of the day the sheet was opened from.
@@ -12,6 +13,7 @@ struct ReportView: View {
     @State private var errorMessage: String?
     @State private var generator: PDFReportGenerator?
     @State private var customName = ""
+    @State private var note: String?
 
     /// Called after a successful export so the host can reveal the Exports list.
     var onExported: () -> Void = {}
@@ -57,12 +59,18 @@ struct ReportView: View {
                     .font(.callout)
                     .foregroundStyle(.red)
             }
+            if let note {
+                Text(note)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
 
             Spacer()
 
             HStack {
                 Button("Cancel", role: .cancel) { dismiss() }
                 Spacer()
+                Button("Copy as Markdown", action: copyMarkdown)
                 Button {
                     export()
                 } label: {
@@ -130,6 +138,22 @@ struct ReportView: View {
 
     private func fetchEntries() -> [ReportEntry] {
         store.entries(from: startDate, to: endDate)
+    }
+
+    private func copyMarkdown() {
+        let lo = Calendar.current.startOfDay(for: startDate)
+        let hi = Calendar.current.startOfDay(for: endDate)
+        let reportRoutines = store.routines.filter { $0.includeInReport }
+        let ids = Set(reportRoutines.map(\.id))
+        let logs = store.routineLogs.filter { ids.contains($0.routineID) && $0.day >= lo && $0.day <= hi }
+        let ratings = store.dayRatings.filter { $0.day >= lo && $0.day <= hi }
+        let md = ReportMarkdownBuilder.markdown(entries: fetchEntries(),
+                                                routines: reportRoutines, routineLogs: logs,
+                                                dayRatings: ratings, from: startDate, to: endDate)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(md, forType: .string)
+        errorMessage = nil
+        note = "Copied as Markdown — paste into Slack, email, or notes."
     }
 
     private func defaultBaseName() -> String {
