@@ -12,6 +12,9 @@ settings:
     GENERATE_INFOPLIST_FILE: YES
     ENABLE_HARDENED_RUNTIME: YES
     CODE_SIGN_STYLE: Automatic
+    # Set your Apple Team ID here for signed / App Store builds:
+    # DEVELOPMENT_TEAM: ABCDE12345
+    INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: "NO"
     INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.productivity"
     INFOPLIST_KEY_NSCalendarsUsageDescription: "Stacktrace reads your calendar so you can reflect on the day's meetings."
     INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription: "Stacktrace reads your calendar so you can reflect on the day's meetings."
@@ -27,4 +30,4 @@ targets:
         PRODUCT_NAME: Stacktrace
         CODE_SIGN_ENTITLEMENTS: Stacktrace/Stacktrace.entitlements
         INFOPLIST_KEY_CFBundleDisplayName: Stacktrace
-        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright © 2026 Willem Poortman"

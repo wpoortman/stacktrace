@@ -101,4 +101,4 @@ Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-[GNU GPLv3](LICENSE)
+[MIT](LICENSE)

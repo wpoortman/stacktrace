@@ -44,6 +44,7 @@
 		B66FA697E6D7A49AD454C9BF /* QuickAddBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 367B3F8E44D744D5C6E05674 /* QuickAddBar.swift */; };
 		BA55479BDDD9C0CD0E6C66B8 /* DateHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 641A4285502FA2852045C95C /* DateHelpers.swift */; };
 		BE464083E90ADFBEEFCBA8C8 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE89C162EC4FB4D1F778DB34 /* FlowLayout.swift */; };
+		C65D6E832E8793FC64788312 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 55EEBD3B40F1D4545E4DB6DF /* PrivacyInfo.xcprivacy */; };
 		D382505A463DF48078A0DAD9 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93371C7D3A3175672888CD59 /* NotificationManager.swift */; };
 		E135CFC700A33101871F87E3 /* MeetingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6A50C1ADBF72463286D4F56 /* MeetingsView.swift */; };
 		E1CF9460FA890FECC675D05F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B7477C3F3B6E653EBDB033D /* ContentView.swift */; };
@@ -75,6 +76,7 @@
 		3DBCD4E57376D2917FCC3F0B /* TagChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagChip.swift; sourceTree = "<group>"; };
 		3F05F648BAA31CFA6D94C5CB /* DataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataStore.swift; sourceTree = "<group>"; };
 		41C384BF0ADBE6B9F12BD9C5 /* ExportsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportsView.swift; sourceTree = "<group>"; };
+		55EEBD3B40F1D4545E4DB6DF /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		56E61916155DA276367A6DDF /* Stacktrace.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stacktrace.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6047A3C27682063E3A236CD9 /* StacktraceApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StacktraceApp.swift; sourceTree = "<group>"; };
 		641A4285502FA2852045C95C /* DateHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateHelpers.swift; sourceTree = "<group>"; };
@@ -207,6 +209,7 @@
 			isa = PBXGroup;
 			children = (
 				378D1258E031C6A23A962A43 /* Assets.xcassets */,
+				55EEBD3B40F1D4545E4DB6DF /* PrivacyInfo.xcprivacy */,
 				0979F0291547564A526ADBC5 /* Stacktrace.entitlements */,
 				6047A3C27682063E3A236CD9 /* StacktraceApp.swift */,
 				C1834E1CEB2069BBD5F72C27 /* Models */,
@@ -277,6 +280,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				51AA65E514489BBA80E9462D /* Assets.xcassets in Resources */,
+				C65D6E832E8793FC64788312 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -387,6 +391,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Stacktrace reads your calendar so you can reflect on the day's meetings.";
 				INFOPLIST_KEY_NSCalendarsUsageDescription = "Stacktrace reads your calendar so you can reflect on the day's meetings.";
@@ -457,6 +462,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Stacktrace reads your calendar so you can reflect on the day's meetings.";
 				INFOPLIST_KEY_NSCalendarsUsageDescription = "Stacktrace reads your calendar so you can reflect on the day's meetings.";
@@ -480,7 +486,7 @@
 				CODE_SIGN_ENTITLEMENTS = Stacktrace/Stacktrace.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Stacktrace;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Willem Poortman";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -498,7 +504,7 @@
 				CODE_SIGN_ENTITLEMENTS = Stacktrace/Stacktrace.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Stacktrace;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Willem Poortman";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

@@ -79,4 +79,4 @@ Never commit secrets, API keys, or local absolute paths.
 ## License
 
 By contributing, you agree that your contributions are licensed under the
-project's [GNU GPLv3](LICENSE).
+project's [MIT License](LICENSE).
