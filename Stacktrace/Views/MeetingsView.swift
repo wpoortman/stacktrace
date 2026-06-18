@@ -17,6 +17,8 @@ struct MeetingsView: View {
             VStack(alignment: .leading, spacing: 20) {
                 if !enabled || !calendar.authorized {
                     notConnected
+                } else if calendar.meetings(on: today).isEmpty && recent.isEmpty {
+                    noMeetings
                 } else {
                     MeetingsReview(day: today)
                     if !recent.isEmpty {
@@ -38,6 +40,14 @@ struct MeetingsView: View {
         }
         .navigationTitle("Meetings")
         .onAppear { calendar.refreshAuthState() }
+    }
+
+    private var noMeetings: some View {
+        ContentUnavailableView {
+            Label("No meetings today", systemImage: "calendar")
+        } description: {
+            Text("Timed events from your calendar show up here to review. All-day events are skipped. Pick a past day from the sidebar to review earlier meetings.")
+        }
     }
 
     private var notConnected: some View {

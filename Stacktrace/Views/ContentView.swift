@@ -80,6 +80,8 @@ struct ContentView: View {
 
     /// Pause all nudges while on holiday; otherwise schedule normally.
     private func applySchedule() {
+        // Don't touch notifications / auto-export while running unit tests.
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil { return }
         if store.isOnHoliday() {
             NotificationManager.cancelAll()
         } else {

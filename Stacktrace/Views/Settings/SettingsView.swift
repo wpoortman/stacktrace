@@ -3,7 +3,17 @@ import SwiftUI
 /// App preferences in a grouped sidebar (no tab overflow). Add a case to
 /// `SettingsPane` and place it in a group below.
 struct SettingsView: View {
-    @State private var selection: SettingsPane = .general
+    /// Backed by UserDefaults so other views (e.g. a paywall) can deep-link to
+    /// a specific pane by setting this key.
+    @AppStorage("settingsPane") private var paneRaw = SettingsPane.general.rawValue
+
+    private var selection: Binding<SettingsPane?> {
+        Binding(
+            get: { SettingsPane(rawValue: paneRaw) },
+            set: { if let v = $0 { paneRaw = v.rawValue } }
+        )
+    }
+    private var current: SettingsPane { SettingsPane(rawValue: paneRaw) ?? .general }
 
     private struct Group: Identifiable {
         let title: String
@@ -19,7 +29,7 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationSplitView {
-            List(selection: $selection) {
+            List(selection: selection) {
                 ForEach(groups) { group in
                     Section(group.title) {
                         ForEach(group.panes) { pane in
@@ -31,7 +41,7 @@ struct SettingsView: View {
             }
             .navigationSplitViewColumnWidth(190)
         } detail: {
-            selection.content
+            current.content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(width: 740, height: 500)

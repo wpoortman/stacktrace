@@ -93,7 +93,16 @@ brew install xcodegen
 xcodegen generate
 ```
 
-Source lives in the `Stacktrace/` directory.
+Source lives in the `Stacktrace/` directory; unit tests in `StacktraceTests/`.
+
+Run the tests:
+
+```bash
+xcodebuild test -project Stacktrace.xcodeproj -scheme Stacktrace \
+  -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO ENABLE_DEBUG_DYLIB=NO
+```
+
+They also run on every push/PR via GitHub Actions.
 
 ## Contributing
 

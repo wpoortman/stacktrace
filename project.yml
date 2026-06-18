@@ -11,6 +11,7 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
     GENERATE_INFOPLIST_FILE: YES
     ENABLE_HARDENED_RUNTIME: YES
+    ENABLE_TESTABILITY: YES
     CODE_SIGN_STYLE: Automatic
     # Set your Apple Team ID here for signed / App Store builds:
     # DEVELOPMENT_TEAM: ABCDE12345
@@ -31,3 +32,23 @@ targets:
         CODE_SIGN_ENTITLEMENTS: Stacktrace/Stacktrace.entitlements
         INFOPLIST_KEY_CFBundleDisplayName: Stacktrace
         INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright © 2026 Willem Poortman"
+  StacktraceTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: StacktraceTests
+    dependencies:
+      - target: Stacktrace
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.wpoortman.stacktrace.tests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  Stacktrace:
+    build:
+      targets:
+        Stacktrace: all
+        StacktraceTests: [test]
+    test:
+      targets:
+        - StacktraceTests

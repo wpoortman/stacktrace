@@ -34,7 +34,7 @@ enum AutoExport {
     }
 
     /// The most recent moment the schedule should have fired, at/just before now.
-    private static func lastScheduledOccurrence(before now: Date) -> Date? {
+    static func lastScheduledOccurrence(before now: Date) -> Date? {
         let cal = Calendar.current
         if frequency == "monthly" {
             // 1st of month at hour.
@@ -51,7 +51,7 @@ enum AutoExport {
         }
     }
 
-    private static func period(endingAt scheduled: Date) -> (Date, Date, String) {
+    static func period(endingAt scheduled: Date) -> (Date, Date, String) {
         let cal = Calendar.current
         let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
         if frequency == "monthly" {

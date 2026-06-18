@@ -68,6 +68,8 @@ struct ProSettingsView: View {
 /// Placeholder shown where a Pro-only feature would be, with a way to unlock.
 struct ProLockedView: View {
     let feature: String
+    @AppStorage("settingsPane") private var paneRaw = "general"
+
     var body: some View {
         ContentUnavailableView {
             Label("\(feature) is a Pro feature", systemImage: "star.circle.fill")
@@ -78,6 +80,7 @@ struct ProLockedView: View {
                 Text("Unlock Pro")
             }
             .buttonStyle(.borderedProminent)
+            .simultaneousGesture(TapGesture().onEnded { paneRaw = "license" })
         }
     }
 }

@@ -57,8 +57,24 @@ Source lives in `Stacktrace/`:
      -configuration Debug build
    ```
 4. Run the app and verify the change behaves as described.
-5. Write a clear PR description: what changed, why, and how you tested it.
+5. **Run the tests** (see below) — they must pass.
+6. Write a clear PR description: what changed, why, and how you tested it.
    Include before/after screenshots for any UI change.
+
+## Tests
+
+Unit tests cover the core logic (data store, routines, report builders,
+licensing, scheduling). Run them locally:
+
+```bash
+xcodegen generate
+xcodebuild test -project Stacktrace.xcodeproj -scheme Stacktrace \
+  -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO ENABLE_DEBUG_DYLIB=NO
+```
+
+The same suite runs automatically on every push and pull request via GitHub
+Actions (`.github/workflows/ci.yml`). Add tests under `StacktraceTests/` for
+any logic you change.
 
 ## Code style
 

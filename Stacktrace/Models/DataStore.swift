@@ -135,6 +135,14 @@ final class DataStore: ObservableObject {
         load()
     }
 
+    /// Test-only: use an isolated directory, skipping bookmarks and migration.
+    init(directoryOverride dir: URL) {
+        StorageLocation.current = dir
+        directory = dir
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        load()
+    }
+
     /// One-time move of the old "Report" folder to the default "Stacktrace"
     /// folder, only when using the default location.
     private func migrateLegacyIfNeeded() {
@@ -434,9 +442,11 @@ final class DataStore: ObservableObject {
 
     func renameTag(_ old: String, to rawNew: String) {
         let new = rawNew.trimmingCharacters(in: .whitespaces)
-        guard !new.isEmpty, new != old, let i = tags.firstIndex(of: old) else { return }
-        tags[i] = new
-        tags.sort { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+        guard !new.isEmpty, new != old else { return }
+        if let i = tags.firstIndex(of: old) {
+            tags[i] = new
+            tags.sort { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+        }
         for j in entries.indices where entries[j].tags.contains(old) {
             entries[j].tags = entries[j].tags.map { $0 == old ? new : $0 }
         }
