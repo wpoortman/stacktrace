@@ -4,6 +4,7 @@ import SwiftUI
 struct StacktraceApp: App {
     @StateObject private var store = DataStore()
     @StateObject private var pro = ProManager.shared
+    @StateObject private var team = TeamManager.shared
 
     var body: some Scene {
         Window("Stacktrace", id: "main") {
@@ -11,6 +12,7 @@ struct StacktraceApp: App {
                 .frame(minWidth: 820, minHeight: 560)
                 .environmentObject(store)
                 .environmentObject(pro)
+                .environmentObject(team)
         }
         .commands {
             CommandGroup(replacing: .newItem) {}
@@ -26,6 +28,7 @@ struct StacktraceApp: App {
             SettingsView()
                 .environmentObject(store)
                 .environmentObject(pro)
+                .environmentObject(team)
         }
     }
 }

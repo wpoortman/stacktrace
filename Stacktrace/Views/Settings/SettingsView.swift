@@ -21,7 +21,7 @@ struct SettingsView: View {
         var id: String { title }
     }
     private let groups = [
-        Group(title: "App", panes: [.general, .storage, .license]),
+        Group(title: "App", panes: [.general, .storage, .license, .team]),
         Group(title: "Logging", panes: [.days, .tags]),
         Group(title: "Schedule", panes: [.routines, .calendar, .reminders, .holiday]),
         Group(title: "Assist", panes: [.ai]),
@@ -58,6 +58,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
     case ai
     case storage
     case license
+    case team
     case holiday
 
     var id: String { rawValue }
@@ -73,6 +74,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .ai: return "AI"
         case .storage: return "Storage"
         case .license: return "Pro"
+        case .team: return "Team"
         case .holiday: return "Holiday"
         }
     }
@@ -88,6 +90,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .ai: return "sparkles"
         case .storage: return "externaldrive"
         case .license: return "star.circle"
+        case .team: return "person.3"
         case .holiday: return "beach.umbrella"
         }
     }
@@ -104,6 +107,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .ai: AISettingsView()
         case .storage: StorageSettingsView()
         case .license: ProSettingsView()
+        case .team: TeamSettingsView()
         case .holiday: HolidaySettingsView()
         }
     }
