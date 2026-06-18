@@ -20,6 +20,11 @@ enum NotificationManager {
         UNUserNotificationCenter.current().delegate = delegate
     }
 
+    /// Cancel all pending reminders (used during a holiday).
+    static func cancelAll() {
+        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+    }
+
     /// Fire a sample notification so the user can see what a reminder looks
     /// like. Reports a precise message about what happened.
     static func sendTest(_ result: @escaping (String) -> Void) {

@@ -37,9 +37,13 @@ struct DashboardView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     greeting
-                    if let day = store.dayNeedingRating(endOfDayHour: endOfDayHour) { ratingCard(day) }
-                    if let m = reachedMilestone { milestoneBanner(m) }
-                    todayCard
+                    if let holiday = store.currentHoliday() {
+                        holidayBanner(holiday)
+                    } else {
+                        if let day = store.dayNeedingRating(endOfDayHour: endOfDayHour) { ratingCard(day) }
+                        if let m = reachedMilestone { milestoneBanner(m) }
+                        todayCard
+                    }
 
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: 4),
                               spacing: 14) {
@@ -125,6 +129,25 @@ struct DashboardView: View {
             symbol: avg.map { MoodScale.symbol(Int($0.rounded())) } ?? "questionmark.circle",
             tint: avg.map { MoodColor.color(forScore: $0) } ?? .secondary
         )
+    }
+
+    // MARK: Holiday
+
+    private func holidayBanner(_ holiday: HolidayPeriod) -> some View {
+        let f = DateFormatter(); f.dateStyle = .medium
+        return HStack(spacing: 10) {
+            Image(systemName: "beach.umbrella.fill").foregroundStyle(.teal)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("On holiday").font(.headline)
+                Text("Reminders and prompts are paused until \(f.string(from: holiday.end)). Enjoy the time off.")
+                    .font(.callout).foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.teal.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.teal.opacity(0.25)))
     }
 
     // MARK: Milestone banner

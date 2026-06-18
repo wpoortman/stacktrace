@@ -44,7 +44,15 @@ struct MeetingsView: View {
         ContentUnavailableView {
             Label("Calendar not connected", systemImage: "calendar.badge.exclamationmark")
         } description: {
-            Text("Connect your calendar in Settings → Calendar to review the day's meetings here.")
+            Text("Connect your calendar to review the day's meetings and reflect on how they went.")
+        } actions: {
+            Button("Connect Calendar") {
+                Task {
+                    let granted = await calendar.requestAccess()
+                    if granted { enabled = true }
+                }
+            }
+            .buttonStyle(.borderedProminent)
         }
     }
 }

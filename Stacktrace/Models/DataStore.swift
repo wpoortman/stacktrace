@@ -62,6 +62,21 @@ struct DayRating: Identifiable, Codable, Equatable {
     }
 }
 
+/// A holiday / time-off period during which the app stops nudging.
+struct HolidayPeriod: Identifiable, Codable, Equatable {
+    var id = UUID()
+    var start: Date    // start-of-day
+    var end: Date      // start-of-day, inclusive
+
+    init(start: Date, end: Date) {
+        self.id = UUID()
+        let s = Calendar.current.startOfDay(for: start)
+        let e = Calendar.current.startOfDay(for: end)
+        self.start = s
+        self.end = max(s, e)
+    }
+}
+
 /// On-disk shape of the data file. Decoding tolerates older files that lack
 /// newer keys so upgrades never wipe data.
 private struct StoreFile: Codable {
@@ -70,15 +85,17 @@ private struct StoreFile: Codable {
     var routines: [Routine] = []
     var routineLogs: [RoutineLog] = []
     var dayRatings: [DayRating] = []
+    var holidays: [HolidayPeriod] = []
 
     init(entries: [ReportEntry], tags: [String],
          routines: [Routine], routineLogs: [RoutineLog],
-         dayRatings: [DayRating]) {
+         dayRatings: [DayRating], holidays: [HolidayPeriod]) {
         self.entries = entries
         self.tags = tags
         self.routines = routines
         self.routineLogs = routineLogs
         self.dayRatings = dayRatings
+        self.holidays = holidays
     }
 
     init(from decoder: Decoder) throws {
@@ -88,6 +105,7 @@ private struct StoreFile: Codable {
         routines = try c.decodeIfPresent([Routine].self, forKey: .routines) ?? []
         routineLogs = try c.decodeIfPresent([RoutineLog].self, forKey: .routineLogs) ?? []
         dayRatings = try c.decodeIfPresent([DayRating].self, forKey: .dayRatings) ?? []
+        holidays = try c.decodeIfPresent([HolidayPeriod].self, forKey: .holidays) ?? []
     }
 }
 
@@ -102,6 +120,7 @@ final class DataStore: ObservableObject {
     @Published private(set) var routines: [Routine] = []
     @Published private(set) var routineLogs: [RoutineLog] = []
     @Published private(set) var dayRatings: [DayRating] = []
+    @Published private(set) var holidays: [HolidayPeriod] = []
     /// Published so the Settings UI updates when the folder changes.
     @Published private(set) var directory: URL = StorageLocation.current
 
@@ -190,6 +209,7 @@ final class DataStore: ObservableObject {
                 routines = file.routines
                 routineLogs = file.routineLogs
                 dayRatings = file.dayRatings
+                holidays = file.holidays
                 return
             }
         }
@@ -198,6 +218,7 @@ final class DataStore: ObservableObject {
         routines = []
         routineLogs = []
         dayRatings = []
+        holidays = []
     }
 
     private func save() {
@@ -206,7 +227,7 @@ final class DataStore: ObservableObject {
         encoder.dateEncodingStrategy = .iso8601
         let file = StoreFile(entries: entries, tags: tags,
                              routines: routines, routineLogs: routineLogs,
-                             dayRatings: dayRatings)
+                             dayRatings: dayRatings, holidays: holidays)
         guard let data = try? encoder.encode(file) else { return }
 
         // Roll the current file to .bak before overwriting.
@@ -342,7 +363,8 @@ final class DataStore: ObservableObject {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
         let file = StoreFile(entries: entries, tags: tags, routines: routines,
-                             routineLogs: routineLogs, dayRatings: dayRatings)
+                             routineLogs: routineLogs, dayRatings: dayRatings,
+                             holidays: holidays)
         return (try? encoder.encode(file)) ?? Data()
     }
 
@@ -511,6 +533,28 @@ final class DataStore: ObservableObject {
             return today
         }
         return nil
+    }
+
+    // MARK: - Holidays
+
+    func addHoliday(start: Date, end: Date) {
+        holidays.append(HolidayPeriod(start: start, end: end))
+        holidays.sort { $0.start < $1.start }
+        save()
+    }
+
+    func deleteHoliday(_ holiday: HolidayPeriod) {
+        holidays.removeAll { $0.id == holiday.id }
+        save()
+    }
+
+    func isOnHoliday(_ date: Date = Date()) -> Bool {
+        currentHoliday(on: date) != nil
+    }
+
+    func currentHoliday(on date: Date = Date()) -> HolidayPeriod? {
+        let d = Calendar.current.startOfDay(for: date)
+        return holidays.first { $0.start <= d && d <= $0.end }
     }
 
     // MARK: - Dashboard stats

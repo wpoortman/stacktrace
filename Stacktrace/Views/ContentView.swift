@@ -63,10 +63,9 @@ struct ContentView: View {
         }
         .onAppear {
             NotificationManager.configure()
-            NotificationManager.refresh()
-            NotificationManager.refreshRoutines(store.routines)
-            AutoExport.runIfDue(store: store)
+            applySchedule()
         }
+        .onChange(of: store.holidays) { _, _ in applySchedule() }
         .sheet(isPresented: .init(get: { !didOnboard }, set: { _ in })) {
             OnboardingView()
         }
@@ -76,6 +75,17 @@ struct ContentView: View {
             ReportView(initialDate: selectedDate) {
                 panel = .exports
             }
+        }
+    }
+
+    /// Pause all nudges while on holiday; otherwise schedule normally.
+    private func applySchedule() {
+        if store.isOnHoliday() {
+            NotificationManager.cancelAll()
+        } else {
+            NotificationManager.refresh()
+            NotificationManager.refreshRoutines(store.routines)
+            AutoExport.runIfDue(store: store)
         }
     }
 

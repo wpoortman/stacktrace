@@ -13,7 +13,7 @@ struct MeetingsReview: View {
     private var isPast: Bool { day <= Calendar.current.startOfDay(for: Date()) }
 
     private var pending: [CalendarMeeting] {
-        guard enabled, calendar.authorized, isPast else { return [] }
+        guard enabled, calendar.authorized, isPast, !store.isOnHoliday(day) else { return [] }
         let logged = store.loggedMeetingIDs(on: day)
         return calendar.meetings(on: day).filter { !logged.contains($0.id) }
     }
