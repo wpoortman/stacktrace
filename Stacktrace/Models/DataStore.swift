@@ -127,12 +127,16 @@ final class DataStore: ObservableObject {
     private var fileURL: URL { directory.appendingPathComponent("data.json") }
     private var backupURL: URL { directory.appendingPathComponent("data.json.bak") }
 
+    private var watcher: FileWatcher?
+
     init() {
         StorageLocation.activate()
         directory = StorageLocation.current
         migrateLegacyIfNeeded()
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         load()
+        // Pick up changes written by external tools (the MCP server) live.
+        watcher = FileWatcher(url: fileURL) { [weak self] in self?.reloadIfChanged() }
     }
 
     /// Test-only: use an isolated directory, skipping bookmarks and migration.
@@ -227,6 +231,24 @@ final class DataStore: ObservableObject {
         routineLogs = []
         dayRatings = []
         holidays = []
+    }
+
+    /// Re-read the file if its contents differ from what's in memory (used by
+    /// the file watcher when an external tool writes the store).
+    private func reloadIfChanged() {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        guard let data = try? Data(contentsOf: fileURL),
+              let file = try? decoder.decode(StoreFile.self, from: data) else { return }
+        guard file.entries != entries || file.tags != tags || file.routines != routines
+            || file.routineLogs != routineLogs || file.dayRatings != dayRatings
+            || file.holidays != holidays else { return }
+        entries = file.entries
+        tags = file.tags
+        routines = file.routines
+        routineLogs = file.routineLogs
+        dayRatings = file.dayRatings
+        holidays = file.holidays
     }
 
     private func save() {

@@ -104,6 +104,14 @@ xcodebuild test -project Stacktrace.xcodeproj -scheme Stacktrace \
 
 They also run on every push/PR via GitHub Actions.
 
+## AI integration (MCP)
+
+You can let an AI assistant log into Stacktrace — *"register this in
+Stacktrace"* — via the bundled **MCP server** in [`mcp/`](mcp/). It exposes
+tools to add entries, wins/setbacks, exercise, and set a day score, writing the
+same `data.json` the app reads (the app live-reloads). See [`mcp/README.md`](mcp/README.md)
+for setup with Claude Desktop / Claude Code.
+
 ## Contributing
 
 Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).

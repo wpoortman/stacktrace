@@ -57,6 +57,11 @@ Settings is a grouped sidebar: **App** (General, Storage, Pro, Team), **Logging*
   `WKWebView.pdf(...)` sliced into A4 pages with PDFKit. Do **not** use
   `NSPrintOperation` — it runs away/hangs on this macOS.
 - **Reminders:** `NotificationManager` (UNUserNotificationCenter, local).
+- **AI integration:** `mcp/` is a Node MCP server exposing tools (add entry /
+  win / setback / exercise / set day score / today) that read-modify-write the
+  same `data.json`. `FileWatcher` makes `DataStore` live-reload external writes.
+  Sandbox caveat: a signed app's data is in its container — point the server at
+  the app's storage folder (env `STACKTRACE_DIR`/`STACKTRACE_DATA`).
 - **Calendar:** `CalendarService` (EventKit) — reads macOS Calendar, which
   already aggregates Google/iCloud/Exchange, so no per-provider OAuth.
 - **Licensing (Pro):** `Licensing.swift` — `ProManager` gates Pro features via a

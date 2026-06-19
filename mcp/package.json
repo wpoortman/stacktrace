@@ -1,0 +1,10 @@
+{
+  "name": "stacktrace-mcp",
+  "version": "1.0.0",
+  "description": "MCP server so AI assistants can log into Stacktrace.",
+  "type": "module",
+  "bin": { "stacktrace-mcp": "index.js" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}
