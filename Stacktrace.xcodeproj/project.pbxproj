@@ -10,6 +10,7 @@
 		0518AB59FE34867C6CFDDDF0 /* ProSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3959165A86B30493F5D07144 /* ProSettingsView.swift */; };
 		0A46A500B71C0F661BB10AB6 /* StorageSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C47D1D94B14F044192A6C13 /* StorageSettingsView.swift */; };
 		0C2FE06B1AE6B786D0A83697 /* HolidaySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36B9AEE154BB7F29916924B /* HolidaySettingsView.swift */; };
+		0C78861653D3DF82B1F48E29 /* DeveloperSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F428405A957BE6D2F5E692A1 /* DeveloperSettingsView.swift */; };
 		100894C60318CC4C76D5372C /* EnhancementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FA49AFBA4385FFD46C04C9E /* EnhancementService.swift */; };
 		11646834899BB9020D27312E /* Routine.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF218961BEE7FEC8FC56AA80 /* Routine.swift */; };
 		118696220428A34D302D270E /* EntryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F019CD06BA322758902943F3 /* EntryListView.swift */; };
@@ -32,6 +33,7 @@
 		677CDA5F35BE60D8657AE1B3 /* LoginItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = E66FAD97849321827CCBFB0A /* LoginItem.swift */; };
 		6AB086A90D5DE0AF7471D72C /* EntryEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D42720143D9A85C1F4302997 /* EntryEditorView.swift */; };
 		6D3FE338E42E3B3C38D518EA /* CalendarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3421C4E616ECF84B46E67A0B /* CalendarService.swift */; };
+		75957204D4EBF44B2A4290C9 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0079AFDD779E730E73D2D944 /* AppConfig.swift */; };
 		763B64F864087E86B13C37B5 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2826AA43A0ECC89415EA47E6 /* SettingsView.swift */; };
 		7CF236BC15A8F6C07A0F8C90 /* TagsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6F587143C698A95D6581705 /* TagsSettingsView.swift */; };
 		82D0E594E34FA0BDBFD886C0 /* SpellCheckTextEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F341677A5EA6284F0E9005B9 /* SpellCheckTextEditor.swift */; };
@@ -77,6 +79,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0079AFDD779E730E73D2D944 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		01DF846AD5B16AE887DBB2E5 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		03DCA21DD77CEF2D15D1E171 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		0979F0291547564A526ADBC5 /* Stacktrace.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Stacktrace.entitlements; sourceTree = "<group>"; };
@@ -136,6 +139,7 @@
 		EF218961BEE7FEC8FC56AA80 /* Routine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Routine.swift; sourceTree = "<group>"; };
 		F019CD06BA322758902943F3 /* EntryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryListView.swift; sourceTree = "<group>"; };
 		F341677A5EA6284F0E9005B9 /* SpellCheckTextEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpellCheckTextEditor.swift; sourceTree = "<group>"; };
+		F428405A957BE6D2F5E692A1 /* DeveloperSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeveloperSettingsView.swift; sourceTree = "<group>"; };
 		F9984BA5D0E1292D321276EA /* StorageLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageLocation.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -221,6 +225,7 @@
 				0C50FF190994C2A09DF3F49A /* AISettingsView.swift */,
 				9F3A769C19EDE4383933046D /* CalendarSettingsView.swift */,
 				207EAA17771384E5FB4B771E /* DaysSettingsView.swift */,
+				F428405A957BE6D2F5E692A1 /* DeveloperSettingsView.swift */,
 				66B4A456345E637AF0D5A563 /* GeneralSettingsView.swift */,
 				C36B9AEE154BB7F29916924B /* HolidaySettingsView.swift */,
 				3959165A86B30493F5D07144 /* ProSettingsView.swift */,
@@ -237,6 +242,7 @@
 		C1834E1CEB2069BBD5F72C27 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				0079AFDD779E730E73D2D944 /* AppConfig.swift */,
 				7B0C08E06583A2947CBB29BE /* AutoExport.swift */,
 				3421C4E616ECF84B46E67A0B /* CalendarService.swift */,
 				3F05F648BAA31CFA6D94C5CB /* DataStore.swift */,
@@ -365,6 +371,7 @@
 			files = (
 				E70D181BE66227B0871502FA /* AISettingsView.swift in Sources */,
 				18D388E53B91459831896E6C /* ActivityView.swift in Sources */,
+				75957204D4EBF44B2A4290C9 /* AppConfig.swift in Sources */,
 				99E5514DC50CB9CEC75A1441 /* AutoExport.swift in Sources */,
 				6D3FE338E42E3B3C38D518EA /* CalendarService.swift in Sources */,
 				963009917E8D2BFFEA08B464 /* CalendarSettingsView.swift in Sources */,
@@ -374,6 +381,7 @@
 				42D02C49545570E2605E329E /* DataStore.swift in Sources */,
 				BA55479BDDD9C0CD0E6C66B8 /* DateHelpers.swift in Sources */,
 				F1A6DDD491A4037416E68B43 /* DaysSettingsView.swift in Sources */,
+				0C78861653D3DF82B1F48E29 /* DeveloperSettingsView.swift in Sources */,
 				100894C60318CC4C76D5372C /* EnhancementService.swift in Sources */,
 				6AB086A90D5DE0AF7471D72C /* EntryEditorView.swift in Sources */,
 				118696220428A34D302D270E /* EntryListView.swift in Sources */,

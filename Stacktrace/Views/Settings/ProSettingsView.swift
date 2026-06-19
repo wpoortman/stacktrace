@@ -6,8 +6,6 @@ struct ProSettingsView: View {
     @EnvironmentObject private var pro: ProManager
     @State private var key = ""
 
-    private static let buyURL = URL(string: "https://stacktrace.app/pricing")!
-
     private static let dateFormatter: DateFormatter = {
         let f = DateFormatter(); f.dateStyle = .medium; return f
     }()
@@ -43,7 +41,7 @@ struct ProSettingsView: View {
                         .disabled(key.trimmingCharacters(in: .whitespaces).isEmpty || pro.isWorking)
                         if pro.isWorking { ProgressView().controlSize(.small) }
                         Spacer()
-                        Button("Buy a license") { NSWorkspace.shared.open(Self.buyURL) }
+                        Button("Buy a license") { NSWorkspace.shared.open(AppConfig.pricingURL) }
                     }
                     if let err = pro.lastError {
                         Text(err).font(.caption).foregroundStyle(.red)

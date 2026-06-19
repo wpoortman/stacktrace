@@ -20,12 +20,18 @@ struct SettingsView: View {
         let panes: [SettingsPane]
         var id: String { title }
     }
-    private let groups = [
-        Group(title: "App", panes: [.general, .storage, .license, .team]),
-        Group(title: "Logging", panes: [.days, .tags]),
-        Group(title: "Schedule", panes: [.routines, .calendar, .reminders, .holiday]),
-        Group(title: "Assist", panes: [.ai]),
-    ]
+    private var groups: [Group] {
+        var g = [
+            Group(title: "App", panes: [.general, .storage, .license, .team]),
+            Group(title: "Logging", panes: [.days, .tags]),
+            Group(title: "Schedule", panes: [.routines, .calendar, .reminders, .holiday]),
+            Group(title: "Assist", panes: [.ai]),
+        ]
+        #if DEBUG
+        g.append(Group(title: "Developer", panes: [.developer]))
+        #endif
+        return g
+    }
 
     var body: some View {
         NavigationSplitView {
@@ -60,6 +66,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
     case license
     case team
     case holiday
+    case developer
 
     var id: String { rawValue }
 
@@ -76,6 +83,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .license: return "Pro"
         case .team: return "Team"
         case .holiday: return "Holiday"
+        case .developer: return "Developer"
         }
     }
 
@@ -92,6 +100,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .license: return "star.circle"
         case .team: return "person.3"
         case .holiday: return "beach.umbrella"
+        case .developer: return "hammer"
         }
     }
 
@@ -109,6 +118,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .license: ProSettingsView()
         case .team: TeamSettingsView()
         case .holiday: HolidaySettingsView()
+        case .developer: DeveloperSettingsView()
         }
     }
 }

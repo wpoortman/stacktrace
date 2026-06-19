@@ -113,20 +113,24 @@ enum TeamMetrics {
     }
 }
 
-/// Drives team profile + sync, Pro/consent gated.
+/// Drives team sync, Pro/consent gated. Deliberately does not expose rate or
+/// billing to the employee — that lives only in the agency web admin.
 @MainActor
 final class TeamManager: ObservableObject {
     static let shared = TeamManager()
 
     @AppStorage("teamSyncEnabled") var syncEnabled = false
-    @AppStorage("teamBaseURL") var baseURLString = ""
 
-    @Published private(set) var profile: MemberProfile?
     @Published var lastError: String?
     @Published var isBusy = false
 
+    /// Human-readable description of what the app is talking to.
+    var connectionDescription: String {
+        AppConfig.teamBaseURL?.absoluteString ?? "Demo (offline)"
+    }
+
     private var api: TeamAPI {
-        if let url = URL(string: baseURLString), !baseURLString.isEmpty {
+        if let url = AppConfig.teamBaseURL {
             return HTTPTeamAPI(baseURL: url, token: SeatToken.current ?? "")
         }
         return MockTeamAPI()
@@ -143,20 +147,14 @@ final class TeamManager: ObservableObject {
         }
     }
 
-    func refresh() async {
-        guard syncEnabled else { return }
-        isBusy = true; defer { isBusy = false }
-        do { profile = try await withReauth { try await api.me() } }
-        catch { lastError = error.localizedDescription }
-    }
-
     func syncDay(_ store: DataStore, day: Date = Date()) async {
         guard syncEnabled else { return }
         isBusy = true; defer { isBusy = false }
         do {
             let metric = TeamMetrics.dailyMetric(from: store, on: day)
-            let effective = try await withReauth { try await api.push(metric) }
-            if var p = profile { p.effectiveRateCents = effective; profile = p }
+            // Push only; the returned rate is intentionally ignored — the app
+            // never surfaces rate/cost to the employee.
+            _ = try await withReauth { try await api.push(metric) }
         } catch {
             lastError = error.localizedDescription
         }

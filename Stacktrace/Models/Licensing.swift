@@ -155,11 +155,10 @@ final class ProManager: ObservableObject {
     private let cacheKey = "licenseEntitlement"
     private let deviceKey = "licenseDeviceID"
 
-    /// Use the real backend when a team server URL is configured; otherwise the
+    /// Use the real backend when a team server URL is resolved; otherwise the
     /// offline mock. (Keeps the offline path identical.)
     private var service: LicenseService {
-        if let s = UserDefaults.standard.string(forKey: "teamBaseURL"),
-           !s.isEmpty, let url = URL(string: s) {
+        if let url = AppConfig.teamBaseURL {
             return HTTPLicenseService(baseURL: url)
         }
         return MockLicenseService()

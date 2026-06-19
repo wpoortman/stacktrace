@@ -1,14 +1,12 @@
 import SwiftUI
 import AppKit
 
-/// Team sync + your rate (Pro). Read-only here; the agency admin manages
-/// members and rates in the web admin.
+/// Team sync (Pro). The employee never sees rates or billing — that lives only
+/// in the agency's web admin. This pane is just consent + a manual sync.
 struct TeamSettingsView: View {
     @EnvironmentObject private var pro: ProManager
     @EnvironmentObject private var team: TeamManager
     @EnvironmentObject private var store: DataStore
-
-    private static let adminURL = URL(string: "https://stacktrace.app/admin")!
 
     var body: some View {
         if !pro.isPro {
@@ -16,10 +14,16 @@ struct TeamSettingsView: View {
         } else {
             Form {
                 Section {
-                    Toggle("Sync my daily summary to my team", isOn: $team.syncEnabled)
+                    Toggle("Share my daily summary with my team", isOn: $team.syncEnabled)
                     if team.syncEnabled {
-                        TextField("Team server URL (blank = demo)", text: $team.baseURLString)
-                            .textFieldStyle(.roundedBorder)
+                        LabeledContent("Server", value: team.connectionDescription)
+                        HStack {
+                            Button("Sync today") { Task { await team.syncDay(store) } }
+                            if team.isBusy { ProgressView().controlSize(.small) }
+                        }
+                        if let err = team.lastError {
+                            Text(err).font(.caption).foregroundStyle(.red)
+                        }
                     }
                 } header: {
                     Text("Team sync")
@@ -28,41 +32,14 @@ struct TeamSettingsView: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
 
-                if team.syncEnabled {
-                    Section("Your rate") {
-                        if let p = team.profile {
-                            LabeledContent("Name", value: p.name)
-                            LabeledContent("Role", value: p.role)
-                            LabeledContent("Base rate", value: rate(p.baseRateCents, p.currency))
-                            LabeledContent("Effective rate", value: rate(p.effectiveRateCents, p.currency))
-                        } else {
-                            Text("Not loaded yet.").foregroundStyle(.secondary)
-                        }
-                        HStack {
-                            Button("Refresh") { Task { await team.refresh() } }
-                            Button("Sync today") { Task { await team.syncDay(store) } }
-                            if team.isBusy { ProgressView().controlSize(.small) }
-                        }
-                        if let err = team.lastError {
-                            Text(err).font(.caption).foregroundStyle(.red)
-                        }
-                    }
-                }
-
                 Section {
-                    Button("Open Team Admin (web)") { NSWorkspace.shared.open(Self.adminURL) }
+                    Button("Open Team Admin (web)") { NSWorkspace.shared.open(AppConfig.adminURL) }
                 } footer: {
-                    Text("Agency owners manage members, roles, and rates in the browser admin.")
+                    Text("Agency owners manage members and the team in the browser admin.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
             .formStyle(.grouped)
-            .task { await team.refresh() }
         }
-    }
-
-    private func rate(_ cents: Int, _ currency: String) -> String {
-        let f = NumberFormatter(); f.numberStyle = .currency; f.currencyCode = currency
-        return f.string(from: NSNumber(value: Double(cents) / 100)) ?? "\(cents)"
     }
 }
