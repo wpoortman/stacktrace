@@ -51,12 +51,22 @@ enum AppConfig {
     static var teamBaseURL: URL? {
         #if DEBUG
         if let s = UserDefaults.standard.string(forKey: devURLKey),
-           !s.trimmingCharacters(in: .whitespaces).isEmpty,
-           let url = URL(string: s) {
+           let url = normalizedURL(s) {
             return url
         }
         #endif
-        let p = productionTeamBaseURL.trimmingCharacters(in: .whitespaces)
-        return p.isEmpty ? nil : URL(string: p)
+        return normalizedURL(productionTeamBaseURL)
+    }
+
+    /// Accept a host typed with or without a scheme; reject anything that isn't
+    /// a valid http(s) URL with a host (prevents malformed open URLs / -50).
+    static func normalizedURL(_ raw: String) -> URL? {
+        var s = raw.trimmingCharacters(in: .whitespaces)
+        guard !s.isEmpty else { return nil }
+        if !s.contains("://") { s = "http://" + s }
+        guard let url = URL(string: s),
+              let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https",
+              let host = url.host, !host.isEmpty else { return nil }
+        return url
     }
 }

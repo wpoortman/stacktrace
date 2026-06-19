@@ -58,6 +58,7 @@
 		E1CF9460FA890FECC675D05F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B7477C3F3B6E653EBDB033D /* ContentView.swift */; };
 		E203C91E21EE8140A8E6FB08 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 341DA48932786654057BF282 /* SearchView.swift */; };
 		E67294FFBDC70AA064073B16 /* TeamAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54D5AB329BCDC40ECB0A815A /* TeamAPI.swift */; };
+		E6CB879AFC9B1B3DC8D1ED57 /* AppConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E25C81C94E9B12FAC3B5867 /* AppConfigTests.swift */; };
 		E70D181BE66227B0871502FA /* AISettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C50FF190994C2A09DF3F49A /* AISettingsView.swift */; };
 		EA15486A27EE489F3C9747A7 /* BuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443481DC1CB8BB70CBCED9D8 /* BuilderTests.swift */; };
 		EADC5ED971D2CFB1CA8F611B /* DataStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 383685AA9AE4116116B3A761 /* DataStoreTests.swift */; };
@@ -101,6 +102,7 @@
 		3959165A86B30493F5D07144 /* ProSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProSettingsView.swift; sourceTree = "<group>"; };
 		3C47D1D94B14F044192A6C13 /* StorageSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageSettingsView.swift; sourceTree = "<group>"; };
 		3DBCD4E57376D2917FCC3F0B /* TagChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagChip.swift; sourceTree = "<group>"; };
+		3E25C81C94E9B12FAC3B5867 /* AppConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigTests.swift; sourceTree = "<group>"; };
 		3F05F648BAA31CFA6D94C5CB /* DataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataStore.swift; sourceTree = "<group>"; };
 		41C384BF0ADBE6B9F12BD9C5 /* ExportsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportsView.swift; sourceTree = "<group>"; };
 		443481DC1CB8BB70CBCED9D8 /* BuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuilderTests.swift; sourceTree = "<group>"; };
@@ -200,6 +202,7 @@
 		94738C1C25981B5EEE83EBF2 /* StacktraceTests */ = {
 			isa = PBXGroup;
 			children = (
+				3E25C81C94E9B12FAC3B5867 /* AppConfigTests.swift */,
 				443481DC1CB8BB70CBCED9D8 /* BuilderTests.swift */,
 				383685AA9AE4116116B3A761 /* DataStoreTests.swift */,
 				6E9D0E14EAB396C1A2175FA7 /* LicenseTests.swift */,
@@ -428,6 +431,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E6CB879AFC9B1B3DC8D1ED57 /* AppConfigTests.swift in Sources */,
 				EA15486A27EE489F3C9747A7 /* BuilderTests.swift in Sources */,
 				EADC5ED971D2CFB1CA8F611B /* DataStoreTests.swift in Sources */,
 				93C58DA7A2550F51081B2274 /* LicenseTests.swift in Sources */,
