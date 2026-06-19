@@ -20,6 +20,28 @@ entries. Sync is opt-in and off by default.
 
 ## Endpoints
 
+### POST /v1/activate
+
+Exchange a license key for a **seat token**. Consumes a seat (enforced against
+the plan's cap) and returns the token used as `Authorization: Bearer` on every
+other call. Re-activating the same device rotates/returns its token.
+
+Request (no auth):
+
+```json
+{ "key": "TEAM-XXXX-XXXX-XXXX", "deviceID": "uuid-per-install" }
+```
+
+Response:
+
+```json
+{ "token": "sanctum-seat-token" }
+```
+
+Errors: `409` when all seats are used; `4xx` for an unknown/expired key. The app
+stores the token in the Keychain and re-activates automatically on a later
+`401`.
+
 ### GET /v1/me
 
 Returns the signed-in member's profile and current rate.

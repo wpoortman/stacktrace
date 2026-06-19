@@ -127,15 +127,27 @@ final class TeamManager: ObservableObject {
 
     private var api: TeamAPI {
         if let url = URL(string: baseURLString), !baseURLString.isEmpty {
-            return HTTPTeamAPI(baseURL: url, token: ProManager.shared.entitlement?.key ?? "")
+            return HTTPTeamAPI(baseURL: url, token: SeatToken.current ?? "")
         }
         return MockTeamAPI()
+    }
+
+    /// Run an API call; on 401 re-activate the seat (rotates the token) and
+    /// retry once.
+    private func withReauth<T>(_ op: () async throws -> T) async throws -> T {
+        do {
+            return try await op()
+        } catch TeamAPIError.unauthorized {
+            guard await ProManager.shared.reactivate() else { throw TeamAPIError.unauthorized }
+            return try await op()
+        }
     }
 
     func refresh() async {
         guard syncEnabled else { return }
         isBusy = true; defer { isBusy = false }
-        do { profile = try await api.me() } catch { lastError = error.localizedDescription }
+        do { profile = try await withReauth { try await api.me() } }
+        catch { lastError = error.localizedDescription }
     }
 
     func syncDay(_ store: DataStore, day: Date = Date()) async {
@@ -143,7 +155,7 @@ final class TeamManager: ObservableObject {
         isBusy = true; defer { isBusy = false }
         do {
             let metric = TeamMetrics.dailyMetric(from: store, on: day)
-            let effective = try await api.push(metric)
+            let effective = try await withReauth { try await api.push(metric) }
             if var p = profile { p.effectiveRateCents = effective; profile = p }
         } catch {
             lastError = error.localizedDescription
