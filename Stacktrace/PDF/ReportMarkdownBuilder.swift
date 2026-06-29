@@ -7,13 +7,16 @@ enum ReportMarkdownBuilder {
                          routines: [Routine] = [],
                          routineLogs: [RoutineLog] = [],
                          dayRatings: [DayRating] = [],
+                         holidays: [HolidayPeriod] = [],
+                         projectNames: [UUID: String] = [:],
                          from start: Date, to end: Date) -> String {
         let cal = Calendar.current
         let grouped = Dictionary(grouping: entries) { cal.startOfDay(for: $0.date) }
         let logsByDay = Dictionary(grouping: routineLogs) { cal.startOfDay(for: $0.day) }
         let routineName = Dictionary(routines.map { ($0.id, $0.name) }) { a, _ in a }
         let ratingByDay = Dictionary(dayRatings.map { (cal.startOfDay(for: $0.day), $0.score) }) { a, _ in a }
-        let days = Set(grouped.keys).union(logsByDay.keys).sorted()
+        let holidayDays = ReportHTMLBuilder.holidayDays(holidays, from: start, to: end, cal: cal)
+        let days = Set(grouped.keys).union(logsByDay.keys).union(holidayDays).sorted()
 
         let range = "\(DateFormat.short.string(from: start)) – \(DateFormat.short.string(from: end))"
         var out = "# Work Report\n\(range) · \(entries.count) \(entries.count == 1 ? "entry" : "entries")\n"
@@ -26,26 +29,30 @@ enum ReportMarkdownBuilder {
         let moodEmoji = ["🌧️", "☁️", "⛅️", "☀️", "✨"]
         for day in days {
             out += "\n## \(DateFormat.dayHeader.string(from: day))\n"
+            if holidayDays.contains(day) {
+                out += "_🏖️ On holiday — time off_\n"
+            }
             if let score = ratingByDay[day] {
                 out += "_Overall day score: \(score)/10_\n"
             }
             for entry in (grouped[day] ?? []).sorted(by: { $0.createdAt < $1.createdAt }) {
+                let proj = entry.projectID.flatMap { projectNames[$0] }.map { " · \($0)" } ?? ""
                 if entry.isExercise {
                     let mins = entry.durationMinutes.map { " — \($0) min" } ?? ""
-                    out += "- 🏃 \(entry.exercise ?? "Exercise")\(mins)\n"
+                    out += "- 🏃 \(entry.exercise ?? "Exercise")\(mins)\(proj)\n"
                 } else if entry.quickKind == "win" {
-                    out += "- 🎉 \(entry.detail)\n"
+                    out += "- 🎉 \(entry.detail)\(proj)\n"
                 } else if entry.quickKind == "fail" {
-                    out += "- 🔸 \(entry.detail)\n"
+                    out += "- 🔸 \(entry.detail)\(proj)\n"
                 } else if entry.isCheckin, let m = entry.mood {
                     let i = max(1, min(5, m)) - 1
-                    out += "- \(moodEmoji[i]) Felt \(["rough", "tough", "okay", "good", "great"][i])\n"
+                    out += "- \(moodEmoji[i]) Felt \(["rough", "tough", "okay", "good", "great"][i])\(proj)\n"
                 } else if entry.isMeeting {
                     let tag = (entry.happened ?? true) ? "" : " (didn't happen)"
-                    out += "\n### 📅 \(entry.title.isEmpty ? "Meeting" : entry.title)\(tag)\n"
+                    out += "\n### 📅 \(entry.title.isEmpty ? "Meeting" : entry.title)\(tag)\(proj)\n"
                     out += reflection(entry)
                 } else {
-                    out += "\n### \(entry.title.isEmpty ? "Untitled" : entry.title)\n"
+                    out += "\n### \(entry.title.isEmpty ? "Untitled" : entry.title)\(proj)\n"
                     if !entry.tags.isEmpty { out += "Tags: \(entry.tags.joined(separator: ", "))\n" }
                     if let m = entry.mood {
                         out += "How it went: \(["Rough", "Tough", "Okay", "Good", "Great"][max(1, min(5, m)) - 1]) (\(m)/5)\n"

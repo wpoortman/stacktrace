@@ -14,6 +14,7 @@ struct ReportView: View {
     @State private var generator: PDFReportGenerator?
     @State private var customName = ""
     @State private var note: String?
+    @State private var selectedProject: UUID?
 
     /// Called after a successful export so the host can reveal the Exports list.
     var onExported: () -> Void = {}
@@ -44,6 +45,13 @@ struct ReportView: View {
                 presetButton("This month", .month, offset: 0)
             }
 
+            if !store.projects.isEmpty {
+                Picker("Project", selection: $selectedProject) {
+                    Text("All entries").tag(UUID?.none)
+                    ForEach(store.projects) { p in Text(p.name).tag(UUID?.some(p.id)) }
+                }
+            }
+
             VStack(alignment: .leading, spacing: 4) {
                 TextField(defaultBaseName(), text: $customName)
                     .textFieldStyle(.roundedBorder)
@@ -52,7 +60,7 @@ struct ReportView: View {
                     .foregroundStyle(.secondary)
             }
 
-            ReportPreviewCount(start: startDate, end: endDate)
+            ReportPreviewCount(start: startDate, end: endDate, projectID: selectedProject)
 
             if let errorMessage {
                 Text(errorMessage)
@@ -102,24 +110,42 @@ struct ReportView: View {
         .controlSize(.small)
     }
 
-    private func export() {
-        errorMessage = nil
-        let entries = fetchEntries()
-        let url = ExportStore.uniqueURL(baseName: resolvedBaseName())
+    /// Inputs for the builders, scoped to the selected project (if any).
+    private struct ReportData {
+        var entries: [ReportEntry]
+        var routines: [Routine]
+        var logs: [RoutineLog]
+        var ratings: [DayRating]
+        var holidays: [HolidayPeriod]
+        var projectNames: [UUID: String]
+    }
 
-        isGenerating = true
-        let reportRoutines = store.routines.filter { $0.includeInReport }
-        let ids = Set(reportRoutines.map(\.id))
+    private func reportData() -> ReportData {
+        let names = Dictionary(store.projects.map { ($0.id, $0.name) }) { a, _ in a }
+        if let p = selectedProject {
+            // A project report is just that project's entries.
+            return ReportData(entries: store.entries(forProject: p, from: startDate, to: endDate),
+                              routines: [], logs: [], ratings: [], holidays: [], projectNames: names)
+        }
         let lo = Calendar.current.startOfDay(for: startDate)
         let hi = Calendar.current.startOfDay(for: endDate)
-        let logs = store.routineLogs.filter {
-            ids.contains($0.routineID) && $0.day >= lo && $0.day <= hi
-        }
+        let routines = store.routines.filter { $0.includeInReport }
+        let ids = Set(routines.map(\.id))
+        let logs = store.routineLogs.filter { ids.contains($0.routineID) && $0.day >= lo && $0.day <= hi }
         let ratings = store.dayRatings.filter { $0.day >= lo && $0.day <= hi }
-        let html = ReportHTMLBuilder.html(entries: entries,
-                                          routines: reportRoutines,
-                                          routineLogs: logs,
-                                          dayRatings: ratings,
+        return ReportData(entries: store.entries(from: startDate, to: endDate),
+                          routines: routines, logs: logs, ratings: ratings,
+                          holidays: store.holidays, projectNames: names)
+    }
+
+    private func export() {
+        errorMessage = nil
+        let d = reportData()
+        let url = ExportStore.uniqueURL(baseName: resolvedBaseName())
+        isGenerating = true
+        let html = ReportHTMLBuilder.html(entries: d.entries, routines: d.routines,
+                                          routineLogs: d.logs, dayRatings: d.ratings,
+                                          holidays: d.holidays, projectNames: d.projectNames,
                                           from: startDate, to: endDate)
         let gen = PDFReportGenerator()
         generator = gen
@@ -136,20 +162,12 @@ struct ReportView: View {
         }
     }
 
-    private func fetchEntries() -> [ReportEntry] {
-        store.entries(from: startDate, to: endDate)
-    }
-
     private func copyMarkdown() {
-        let lo = Calendar.current.startOfDay(for: startDate)
-        let hi = Calendar.current.startOfDay(for: endDate)
-        let reportRoutines = store.routines.filter { $0.includeInReport }
-        let ids = Set(reportRoutines.map(\.id))
-        let logs = store.routineLogs.filter { ids.contains($0.routineID) && $0.day >= lo && $0.day <= hi }
-        let ratings = store.dayRatings.filter { $0.day >= lo && $0.day <= hi }
-        let md = ReportMarkdownBuilder.markdown(entries: fetchEntries(),
-                                                routines: reportRoutines, routineLogs: logs,
-                                                dayRatings: ratings, from: startDate, to: endDate)
+        let d = reportData()
+        let md = ReportMarkdownBuilder.markdown(entries: d.entries, routines: d.routines,
+                                                routineLogs: d.logs, dayRatings: d.ratings,
+                                                holidays: d.holidays, projectNames: d.projectNames,
+                                                from: startDate, to: endDate)
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(md, forType: .string)
         errorMessage = nil
@@ -159,7 +177,8 @@ struct ReportView: View {
     private func defaultBaseName() -> String {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
-        return "Work Report \(f.string(from: startDate)) to \(f.string(from: endDate))"
+        let prefix = store.projectName(selectedProject) ?? "Work"
+        return "\(prefix) Report \(f.string(from: startDate)) to \(f.string(from: endDate))"
     }
 
     /// Custom name if given (sanitized), otherwise the default.
@@ -176,9 +195,13 @@ struct ReportView: View {
 private struct ReportPreviewCount: View {
     let start: Date
     let end: Date
+    let projectID: UUID?
     @EnvironmentObject private var store: DataStore
 
-    private var count: Int { store.entries(from: start, to: end).count }
+    private var count: Int {
+        if let p = projectID { return store.entries(forProject: p, from: start, to: end).count }
+        return store.entries(from: start, to: end).count
+    }
 
     var body: some View {
         Label("\(count) \(count == 1 ? "entry" : "entries") in range",

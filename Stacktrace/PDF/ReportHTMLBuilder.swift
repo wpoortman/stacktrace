@@ -7,6 +7,8 @@ enum ReportHTMLBuilder {
                      routines: [Routine] = [],
                      routineLogs: [RoutineLog] = [],
                      dayRatings: [DayRating] = [],
+                     holidays: [HolidayPeriod] = [],
+                     projectNames: [UUID: String] = [:],
                      from start: Date, to end: Date) -> String {
         let cal = Calendar.current
 
@@ -15,8 +17,9 @@ enum ReportHTMLBuilder {
         let logsByDay = Dictionary(grouping: routineLogs) { cal.startOfDay(for: $0.day) }
         let routineName = Dictionary(routines.map { ($0.id, $0.name) }) { a, _ in a }
         let ratingByDay = Dictionary(dayRatings.map { (cal.startOfDay(for: $0.day), $0.score) }) { a, _ in a }
+        let holidayDays = holidayDays(holidays, from: start, to: end, cal: cal)
 
-        let days = Set(grouped.keys).union(logsByDay.keys).sorted()
+        let days = Set(grouped.keys).union(logsByDay.keys).union(holidayDays).sorted()
 
         let rangeLabel = "\(DateFormat.short.string(from: start)) – \(DateFormat.short.string(from: end))"
 
@@ -28,11 +31,14 @@ enum ReportHTMLBuilder {
                 let dayEntries = (grouped[day] ?? []).sorted { $0.createdAt < $1.createdAt }
                 body += "<section class=\"day\">"
                 body += "<h2>\(DateFormat.dayHeader.string(from: day).htmlEscaped)</h2>"
+                if holidayDays.contains(day) {
+                    body += "<p class=\"holiday\">🏖️ On holiday — time off</p>"
+                }
                 if let score = ratingByDay[day] {
                     body += "<p class=\"dayscore\">Overall day score: <strong>\(score)/10</strong></p>"
                 }
                 for entry in dayEntries {
-                    body += entryHTML(entry)
+                    body += entryHTML(entry, projectNames: projectNames)
                 }
                 body += movementHTML(logsByDay[day] ?? [], names: routineName, order: routines)
                 body += "</section>"
@@ -64,6 +70,24 @@ enum ReportHTMLBuilder {
         """
     }
 
+    /// Start-of-day dates within [from, to] covered by any holiday period.
+    static func holidayDays(_ holidays: [HolidayPeriod], from: Date, to: Date,
+                            cal: Calendar) -> Set<Date> {
+        let lo = cal.startOfDay(for: from)
+        let hi = cal.startOfDay(for: to)
+        var out = Set<Date>()
+        for h in holidays {
+            var d = max(h.start, lo)
+            let end = min(h.end, hi)
+            while d <= end {
+                out.insert(d)
+                guard let next = cal.date(byAdding: .day, value: 1, to: d) else { break }
+                d = next
+            }
+        }
+        return out
+    }
+
     /// "Movement: Stand & stretch ✓ · Walk ×3" for a day's routine completions.
     private static func movementHTML(_ logs: [RoutineLog],
                                      names: [UUID: String],
@@ -83,23 +107,27 @@ enum ReportHTMLBuilder {
 
     private static let moodEmoji = ["🌧️", "☁️", "⛅️", "☀️", "✨"]
 
-    private static func entryHTML(_ entry: ReportEntry) -> String {
+    private static func entryHTML(_ entry: ReportEntry, projectNames: [UUID: String]) -> String {
+        let projectName = entry.projectID.flatMap { projectNames[$0] }
+        let itemProject = projectName.map { " · \($0.htmlEscaped)" } ?? ""
+        let projectTag = projectName.map { " <span class=\"proj\">\($0.htmlEscaped)</span>" } ?? ""
+
         // Compact activity items — no title, render with an icon like the app.
         if entry.isExercise {
             let name = (entry.exercise ?? "Exercise").htmlEscaped
             let mins = entry.durationMinutes.map { " — \($0) min" } ?? ""
-            return "<p class=\"item\">🏃 \(name)\(mins)</p>"
+            return "<p class=\"item\">🏃 \(name)\(mins)\(itemProject)</p>"
         }
         if entry.quickKind == "win" {
-            return "<p class=\"item\">🎉 \(entry.detail.htmlEscaped)</p>"
+            return "<p class=\"item\">🎉 \(entry.detail.htmlEscaped)\(itemProject)</p>"
         }
         if entry.quickKind == "fail" {
-            return "<p class=\"item\">🔸 \(entry.detail.htmlEscaped)</p>"
+            return "<p class=\"item\">🔸 \(entry.detail.htmlEscaped)\(itemProject)</p>"
         }
         if entry.isCheckin, let m = entry.mood {
             let i = max(1, min(5, m)) - 1
             let labels = ["Rough", "Tough", "Okay", "Good", "Great"]
-            return "<p class=\"item\">\(moodEmoji[i]) Felt \(labels[i].lowercased())</p>"
+            return "<p class=\"item\">\(moodEmoji[i]) Felt \(labels[i].lowercased())\(itemProject)</p>"
         }
 
         var parts = "<article class=\"entry\">"
@@ -107,10 +135,10 @@ enum ReportHTMLBuilder {
         if entry.isMeeting {
             let name = (entry.title.isEmpty ? "Meeting" : entry.title).htmlEscaped
             let tag = (entry.happened ?? true) ? "Meeting" : "Meeting (didn't happen)"
-            parts += "<h3>📅 \(name) <span class=\"meeting-tag\">\(tag)</span></h3>"
+            parts += "<h3>📅 \(name) <span class=\"meeting-tag\">\(tag)</span>\(projectTag)</h3>"
         } else {
             let title = entry.title.isEmpty ? "Untitled" : entry.title
-            parts += "<h3>\(title.htmlEscaped)</h3>"
+            parts += "<h3>\(title.htmlEscaped)\(projectTag)</h3>"
         }
 
         if !entry.tags.isEmpty {
@@ -198,8 +226,12 @@ enum ReportHTMLBuilder {
     .item { margin: 4px 0 8px 12px; font-size: 12.5px; }
     .mood { margin: 0 0 6px; color: #555; font-size: 11px; }
     .dayscore { margin: -4px 0 10px; color: #3a3a8c; font-size: 11px; }
+    .holiday { margin: 0 0 10px; color: #0f7b86; font-size: 11px;
+      background: #e6f6f8; padding: 5px 9px; border-radius: 5px; }
     .meeting-tag { font-size: 9px; font-weight: 600; color: #3a3a8c;
       background: #e9e9f7; padding: 1px 6px; border-radius: 8px; vertical-align: middle; }
+    .proj { font-size: 9px; font-weight: 600; color: #6e6e73;
+      background: #f0f0f2; padding: 1px 6px; border-radius: 8px; vertical-align: middle; }
     .movement { margin: 6px 0 0; color: #1e7a36; font-size: 11px;
       background: #eaf7ee; padding: 5px 9px; border-radius: 5px; }
     .note {

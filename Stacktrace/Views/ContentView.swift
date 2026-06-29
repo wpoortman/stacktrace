@@ -13,6 +13,9 @@ struct ContentView: View {
     @State private var searchText = ""
     @State private var tagFilter: Set<String> = []
     @AppStorage("didOnboard") private var didOnboard = false
+    /// Drives the "this week" list; bumped when the calendar day changes so the
+    /// sidebar rolls over to the new week without a relaunch.
+    @State private var todayAnchor = Calendar.current.startOfDay(for: Date())
 
     private var isSearching: Bool {
         !searchText.trimmingCharacters(in: .whitespaces).isEmpty || !tagFilter.isEmpty
@@ -26,8 +29,8 @@ struct ContentView: View {
     private var workdays: [Date] {
         var cal = Calendar.current
         cal.firstWeekday = 2 // Monday
-        let monday = cal.dateInterval(of: .weekOfYear, for: Date())?.start
-            ?? cal.startOfDay(for: Date())
+        let monday = cal.dateInterval(of: .weekOfYear, for: todayAnchor)?.start
+            ?? cal.startOfDay(for: todayAnchor)
         return (0..<7).compactMap { offset in
             guard let date = cal.date(byAdding: .day, value: offset, to: monday),
                   let day = Weekday(rawValue: cal.component(.weekday, from: date)),
@@ -64,6 +67,13 @@ struct ContentView: View {
         .onAppear {
             NotificationManager.configure()
             applySchedule()
+            refreshToday()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
+            refreshToday()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            refreshToday()
         }
         .onChange(of: store.holidays) { _, _ in applySchedule() }
         .sheet(isPresented: .init(get: { !didOnboard }, set: { _ in })) {
@@ -76,6 +86,12 @@ struct ContentView: View {
                 panel = .exports
             }
         }
+    }
+
+    /// Roll the sidebar to the current week when the day changes.
+    private func refreshToday() {
+        let start = Calendar.current.startOfDay(for: Date())
+        if start != todayAnchor { todayAnchor = start }
     }
 
     /// Pause all nudges while on holiday; otherwise schedule normally.
@@ -162,7 +178,7 @@ struct ContentView: View {
                         day: day,
                         isSelected: Calendar.current.isDate(day, inSameDayAs: selectedDate),
                         hasEntries: daysWithEntries.contains(Calendar.current.startOfDay(for: day)),
-                        isFuture: day > Calendar.current.startOfDay(for: Date())
+                        isFuture: day > todayAnchor
                     ) {
                         selectDay(day)
                     }

@@ -33,6 +33,12 @@ struct EntryEditorView: View {
                     field("How did it go?") {
                         MoodPicker(mood: $entry.mood)
                     }
+                    if !store.projects.isEmpty {
+                        field("Project") {
+                            ProjectPicker(projectID: $entry.projectID)
+                                .labelsHidden()
+                        }
+                    }
                     field("Description") {
                         editor($entry.detail, height: 110,
                                placeholder: "What did you do?")

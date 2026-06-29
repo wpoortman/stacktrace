@@ -23,7 +23,7 @@ struct SettingsView: View {
     private var groups: [Group] {
         var g = [
             Group(title: "App", panes: [.general, .storage, .license, .team]),
-            Group(title: "Logging", panes: [.days, .tags]),
+            Group(title: "Logging", panes: [.days, .projects, .tags]),
             Group(title: "Schedule", panes: [.routines, .calendar, .reminders, .holiday]),
             Group(title: "Assist", panes: [.ai]),
         ]
@@ -57,6 +57,7 @@ struct SettingsView: View {
 enum SettingsPane: String, CaseIterable, Identifiable {
     case general
     case days
+    case projects
     case routines
     case calendar
     case reminders
@@ -74,6 +75,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         switch self {
         case .general: return "General"
         case .days: return "Days"
+        case .projects: return "Projects"
         case .routines: return "Routines"
         case .calendar: return "Calendar"
         case .reminders: return "Reminders"
@@ -91,6 +93,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         switch self {
         case .general: return "gearshape"
         case .days: return "calendar"
+        case .projects: return "folder"
         case .routines: return "figure.walk"
         case .calendar: return "calendar.badge.clock"
         case .reminders: return "bell"
@@ -109,6 +112,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         switch self {
         case .general: GeneralSettingsView()
         case .days: DaysSettingsView()
+        case .projects: ProjectsSettingsView()
         case .routines: RoutinesSettingsView()
         case .calendar: CalendarSettingsView()
         case .reminders: RemindersSettingsView()

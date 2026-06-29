@@ -17,8 +17,10 @@ enum ReportExporter {
         let logs = store.routineLogs.filter { ids.contains($0.routineID) && $0.day >= lo && $0.day <= hi }
         let ratings = store.dayRatings.filter { $0.day >= lo && $0.day <= hi }
 
+        let names = Dictionary(store.projects.map { ($0.id, $0.name) }) { a, _ in a }
         let html = ReportHTMLBuilder.html(entries: entries, routines: routines,
                                           routineLogs: logs, dayRatings: ratings,
+                                          holidays: store.holidays, projectNames: names,
                                           from: from, to: to)
         let url = ExportStore.uniqueURL(baseName: baseName)
         let gen = PDFReportGenerator()

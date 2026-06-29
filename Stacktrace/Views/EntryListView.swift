@@ -169,8 +169,10 @@ private struct DayExportSheet: View {
             ids.contains($0.routineID) && Calendar.current.isDate($0.day, inSameDayAs: day)
         }
         let ratings = store.dayRatings.filter { Calendar.current.isDate($0.day, inSameDayAs: day) }
+        let names = Dictionary(store.projects.map { ($0.id, $0.name) }) { a, _ in a }
         let html = ReportHTMLBuilder.html(entries: entries, routines: routines,
                                           routineLogs: logs, dayRatings: ratings,
+                                          holidays: store.holidays, projectNames: names,
                                           from: day, to: day)
         generating = true
         let gen = PDFReportGenerator()

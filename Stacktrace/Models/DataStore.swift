@@ -22,6 +22,8 @@ struct ReportEntry: Identifiable, Codable, Equatable {
     /// Set for a meeting reflection sourced from the calendar.
     var eventID: String?
     var happened: Bool?
+    /// Optional link to a Project.
+    var projectID: UUID?
     var createdAt: Date = Date()
 
     var isQuick: Bool { quickKind != nil }
@@ -62,6 +64,19 @@ struct DayRating: Identifiable, Codable, Equatable {
     }
 }
 
+/// A project entries can be grouped under for project-specific reports.
+struct Project: Identifiable, Codable, Equatable {
+    var id = UUID()
+    var name: String
+    var details: String
+
+    init(name: String, details: String = "") {
+        self.id = UUID()
+        self.name = name
+        self.details = details
+    }
+}
+
 /// A holiday / time-off period during which the app stops nudging.
 struct HolidayPeriod: Identifiable, Codable, Equatable {
     var id = UUID()
@@ -86,16 +101,18 @@ private struct StoreFile: Codable {
     var routineLogs: [RoutineLog] = []
     var dayRatings: [DayRating] = []
     var holidays: [HolidayPeriod] = []
+    var projects: [Project] = []
 
     init(entries: [ReportEntry], tags: [String],
          routines: [Routine], routineLogs: [RoutineLog],
-         dayRatings: [DayRating], holidays: [HolidayPeriod]) {
+         dayRatings: [DayRating], holidays: [HolidayPeriod], projects: [Project]) {
         self.entries = entries
         self.tags = tags
         self.routines = routines
         self.routineLogs = routineLogs
         self.dayRatings = dayRatings
         self.holidays = holidays
+        self.projects = projects
     }
 
     init(from decoder: Decoder) throws {
@@ -106,6 +123,7 @@ private struct StoreFile: Codable {
         routineLogs = try c.decodeIfPresent([RoutineLog].self, forKey: .routineLogs) ?? []
         dayRatings = try c.decodeIfPresent([DayRating].self, forKey: .dayRatings) ?? []
         holidays = try c.decodeIfPresent([HolidayPeriod].self, forKey: .holidays) ?? []
+        projects = try c.decodeIfPresent([Project].self, forKey: .projects) ?? []
     }
 }
 
@@ -121,6 +139,7 @@ final class DataStore: ObservableObject {
     @Published private(set) var routineLogs: [RoutineLog] = []
     @Published private(set) var dayRatings: [DayRating] = []
     @Published private(set) var holidays: [HolidayPeriod] = []
+    @Published private(set) var projects: [Project] = []
     /// Published so the Settings UI updates when the folder changes.
     @Published private(set) var directory: URL = StorageLocation.current
 
@@ -222,6 +241,7 @@ final class DataStore: ObservableObject {
                 routineLogs = file.routineLogs
                 dayRatings = file.dayRatings
                 holidays = file.holidays
+                projects = file.projects
                 return
             }
         }
@@ -231,6 +251,7 @@ final class DataStore: ObservableObject {
         routineLogs = []
         dayRatings = []
         holidays = []
+        projects = []
     }
 
     /// Re-read the file if its contents differ from what's in memory (used by
@@ -257,7 +278,7 @@ final class DataStore: ObservableObject {
         encoder.dateEncodingStrategy = .iso8601
         let file = StoreFile(entries: entries, tags: tags,
                              routines: routines, routineLogs: routineLogs,
-                             dayRatings: dayRatings, holidays: holidays)
+                             dayRatings: dayRatings, holidays: holidays, projects: projects)
         guard let data = try? encoder.encode(file) else { return }
 
         // Roll the current file to .bak before overwriting.
@@ -323,13 +344,14 @@ final class DataStore: ObservableObject {
 
     /// Quick win / setback item — just a line of text, no full form. Wins read
     /// positive (green), setbacks negative (orange) in the graph.
-    func addQuick(_ text: String, kind: String, on day: Date = Date()) {
+    func addQuick(_ text: String, kind: String, on day: Date = Date(), projectID: UUID? = nil) {
         let trimmed = text.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
         var e = ReportEntry(date: day)
         e.quickKind = kind
         e.detail = trimmed
         e.mood = (kind == "win") ? 5 : 2
+        e.projectID = projectID
         upsert(e)
     }
 
@@ -341,12 +363,13 @@ final class DataStore: ObservableObject {
     }
 
     /// Log an exercise activity (name + minutes).
-    func addExercise(_ name: String, minutes: Int, on day: Date = Date()) {
+    func addExercise(_ name: String, minutes: Int, on day: Date = Date(), projectID: UUID? = nil) {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
         var e = ReportEntry(date: day)
         e.exercise = trimmed
         e.durationMinutes = max(1, minutes)
+        e.projectID = projectID
         upsert(e)
     }
 
@@ -394,7 +417,7 @@ final class DataStore: ObservableObject {
         encoder.dateEncodingStrategy = .iso8601
         let file = StoreFile(entries: entries, tags: tags, routines: routines,
                              routineLogs: routineLogs, dayRatings: dayRatings,
-                             holidays: holidays)
+                             holidays: holidays, projects: projects)
         return (try? encoder.encode(file)) ?? Data()
     }
 
@@ -587,6 +610,34 @@ final class DataStore: ObservableObject {
     func currentHoliday(on date: Date = Date()) -> HolidayPeriod? {
         let d = Calendar.current.startOfDay(for: date)
         return holidays.first { $0.start <= d && d <= $0.end }
+    }
+
+    // MARK: - Projects
+
+    func upsertProject(_ project: Project) {
+        if let i = projects.firstIndex(where: { $0.id == project.id }) {
+            projects[i] = project
+        } else {
+            projects.append(project)
+        }
+        save()
+    }
+
+    func deleteProject(_ project: Project) {
+        projects.removeAll { $0.id == project.id }
+        for j in entries.indices where entries[j].projectID == project.id {
+            entries[j].projectID = nil
+        }
+        save()
+    }
+
+    func projectName(_ id: UUID?) -> String? {
+        guard let id else { return nil }
+        return projects.first { $0.id == id }?.name
+    }
+
+    func entries(forProject id: UUID, from start: Date, to end: Date) -> [ReportEntry] {
+        entries(from: start, to: end).filter { $0.projectID == id }
     }
 
     // MARK: - Dashboard stats

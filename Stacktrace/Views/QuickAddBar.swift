@@ -57,6 +57,7 @@ private struct QuickComposeSheet: View {
     @EnvironmentObject private var store: DataStore
     @Environment(\.dismiss) private var dismiss
     @State private var text = ""
+    @State private var project: UUID?
     @FocusState private var focused: Bool
 
     private var isWin: Bool { kind == "win" }
@@ -80,6 +81,13 @@ private struct QuickComposeSheet: View {
                 .focused($focused)
                 .onSubmit(commit)
 
+            if !store.projects.isEmpty {
+                Picker("Project", selection: $project) {
+                    Text("None").tag(UUID?.none)
+                    ForEach(store.projects) { p in Text(p.name).tag(UUID?.some(p.id)) }
+                }
+            }
+
             HStack {
                 Spacer()
                 Button("Cancel", role: .cancel) { dismiss() }
@@ -95,7 +103,7 @@ private struct QuickComposeSheet: View {
     }
 
     private func commit() {
-        store.addQuick(text, kind: kind, on: day)
+        store.addQuick(text, kind: kind, on: day, projectID: project)
         dismiss()
     }
 }
