@@ -103,6 +103,7 @@ struct ContentView: View {
         } else {
             NotificationManager.refresh()
             NotificationManager.refreshRoutines(store.routines)
+            NotificationManager.refreshDayScore()
             AutoExport.runIfDue(store: store)
         }
     }

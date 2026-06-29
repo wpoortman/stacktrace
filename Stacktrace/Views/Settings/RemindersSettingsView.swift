@@ -8,6 +8,7 @@ struct RemindersSettingsView: View {
     @AppStorage(NotificationManager.hourKey) private var hour = 17
     @AppStorage(NotificationManager.minuteKey) private var minute = 0
     @AppStorage("endOfDayHour") private var endOfDayHour = 18
+    @AppStorage(NotificationManager.dayScoreEnabledKey) private var dayScoreReminder = false
     @State private var testNote: String?
 
     /// Bridges the hour/minute defaults to a single Date for the picker.
@@ -44,11 +45,14 @@ struct RemindersSettingsView: View {
             }
 
             Section {
-                Stepper("Ask after \(endOfDayHour):00", value: $endOfDayHour, in: 0...23)
+                Stepper("End of day at \(endOfDayHour):00", value: $endOfDayHour, in: 0...23)
+                    .onChange(of: endOfDayHour) { _, _ in NotificationManager.refreshDayScore() }
+                Toggle("Remind me to score the day", isOn: $dayScoreReminder)
+                    .onChange(of: dayScoreReminder) { _, _ in NotificationManager.refreshDayScore() }
             } header: {
                 Text("End of day")
             } footer: {
-                Text("When today is considered wrapped up — the dashboard then asks for an overall 1–10 score for the day.")
+                Text("When today is considered wrapped up. The dashboard asks for an overall 1–10 score, and — if enabled — a notification reminds you at this time.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

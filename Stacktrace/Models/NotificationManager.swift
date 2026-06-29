@@ -25,6 +25,33 @@ enum NotificationManager {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
     }
 
+    // MARK: - End-of-day score reminder
+
+    static let dayScoreEnabledKey = "dayScoreReminderEnabled"
+    private static let dayScoreID = "day-score-reminder"
+
+    static var dayScoreEnabled: Bool { UserDefaults.standard.bool(forKey: dayScoreEnabledKey) }
+    private static var endOfDayHour: Int {
+        (UserDefaults.standard.object(forKey: "endOfDayHour") as? Int) ?? 18
+    }
+
+    /// (Re)schedule the daily "score your day" reminder at the end-of-day hour.
+    static func refreshDayScore() {
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: [dayScoreID])
+        guard dayScoreEnabled else { return }
+        center.requestAuthorization(options: [.alert, .sound]) { granted, _ in
+            guard granted else { return }
+            let content = UNMutableNotificationContent()
+            content.title = "How did today go?"
+            content.body = "Take a moment to give the day a score."
+            content.sound = .default
+            var comps = DateComponents(); comps.hour = endOfDayHour; comps.minute = 0
+            let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: true)
+            center.add(UNNotificationRequest(identifier: dayScoreID, content: content, trigger: trigger))
+        }
+    }
+
     /// Fire a sample notification so the user can see what a reminder looks
     /// like. Reports a precise message about what happened.
     static func sendTest(_ result: @escaping (String) -> Void) {
