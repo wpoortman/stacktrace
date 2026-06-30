@@ -1,5 +1,11 @@
 import Foundation
 
+/// A rendered trends chart to embed in the report.
+struct ReportChart {
+    let title: String
+    let pngBase64: String
+}
+
 /// Builds the printable HTML for a report covering a date range.
 /// Entries are grouped under day headers, clean professional layout.
 enum ReportHTMLBuilder {
@@ -9,6 +15,7 @@ enum ReportHTMLBuilder {
                      dayRatings: [DayRating] = [],
                      holidays: [HolidayPeriod] = [],
                      projectNames: [UUID: String] = [:],
+                     charts: [ReportChart] = [],
                      from start: Date, to end: Date) -> String {
         let cal = Calendar.current
 
@@ -43,6 +50,16 @@ enum ReportHTMLBuilder {
                 body += movementHTML(logsByDay[day] ?? [], names: routineName, order: routines)
                 body += "</section>"
             }
+        }
+
+        if !charts.isEmpty {
+            var trends = "<section class=\"trends\"><h2>Trends</h2>"
+            for chart in charts {
+                trends += "<p class=\"chart-title\">\(chart.title.htmlEscaped)</p>"
+                trends += "<img class=\"chart\" src=\"data:image/png;base64,\(chart.pngBase64)\"/>"
+            }
+            trends += "</section>"
+            body = trends + body
         }
 
         let count = entries.count
@@ -246,6 +263,10 @@ enum ReportHTMLBuilder {
     .note.bad { background: #fdf0e8; }
     .note.bad .note-label { color: #b5530f; }
     .empty { color: #6e6e73; font-style: italic; }
+    .trends { margin: 0 0 22px; }
+    .trends h2 { font-size: 14px; background: #f2f2f4; padding: 6px 10px; border-radius: 5px; margin: 0 0 10px; }
+    .chart-title { font-size: 11px; font-weight: 600; color: #555; margin: 8px 0 2px; }
+    .chart { width: 100%; border: 1px solid #e2e2e6; border-radius: 6px; page-break-inside: avoid; }
     """
 }
 

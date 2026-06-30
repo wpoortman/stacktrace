@@ -124,7 +124,7 @@ final class PDFReportGenerator: NSObject, WKNavigationDelegate {
           var PAGE = \(Int(pageHeight));
           var TOPGAP = 28;     // breathing room at top of pushed pages
           var BOTTOM = 40;     // min whitespace before a page break
-          var nodes = Array.from(document.querySelectorAll('.day h2, .entry'));
+          var nodes = Array.from(document.querySelectorAll('.day h2, .entry, .chart, .trends h2'));
           for (var i = 0; i < nodes.length; i++){
             var el = nodes[i];
             var r = el.getBoundingClientRect();

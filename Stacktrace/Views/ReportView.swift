@@ -5,6 +5,7 @@ import AppKit
 /// Defaults to the calendar week of the day the sheet was opened from.
 struct ReportView: View {
     @EnvironmentObject private var store: DataStore
+    @EnvironmentObject private var pro: ProManager
     @Environment(\.dismiss) private var dismiss
 
     @State private var startDate: Date
@@ -143,9 +144,13 @@ struct ReportView: View {
         let d = reportData()
         let url = ExportStore.uniqueURL(baseName: resolvedBaseName())
         isGenerating = true
+        // Trends charts: Pro-only, and only for the all-entries report.
+        let charts = (pro.isPro && selectedProject == nil)
+            ? TrendsChartRenderer.charts(store, from: startDate, to: endDate) : []
         let html = ReportHTMLBuilder.html(entries: d.entries, routines: d.routines,
                                           routineLogs: d.logs, dayRatings: d.ratings,
                                           holidays: d.holidays, projectNames: d.projectNames,
+                                          charts: charts,
                                           from: startDate, to: endDate)
         let gen = PDFReportGenerator()
         generator = gen
