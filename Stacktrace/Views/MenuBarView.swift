@@ -48,12 +48,13 @@ struct MenuBarView: View {
             Picker("", selection: $kind) {
                 Text("Win").tag("win")
                 Text("Setback").tag("fail")
+                Text("Note").tag("note")
             }
             .pickerStyle(.segmented)
             .labelsHidden()
 
             HStack {
-                TextField(kind == "win" ? "A small win…" : "A setback…", text: $text)
+                TextField(placeholder, text: $text)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit(addQuick)
                 Button("Add", action: addQuick)
@@ -74,6 +75,14 @@ struct MenuBarView: View {
         }
         .padding(14)
         .frame(width: 300)
+    }
+
+    private var placeholder: String {
+        switch kind {
+        case "win": return "A small win…"
+        case "fail": return "A setback…"
+        default: return "What did you do?"
+        }
     }
 
     private func addQuick() {

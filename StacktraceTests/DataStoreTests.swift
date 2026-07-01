@@ -27,6 +27,22 @@ final class DataStoreTests: XCTestCase {
         XCTAssertEqual(store.entries(on: Date()).first?.title, "Wrote tests")
     }
 
+    func testQuickNoteIsNeutral() {
+        let store = makeStore()
+        // A note with no mood stays neutral (no win/loss framing, no mood).
+        store.addQuick("Refactored the parser", kind: "note")
+        let plain = store.entries(on: Date()).first
+        XCTAssertEqual(plain?.quickKind, "note")
+        XCTAssertEqual(plain?.detail, "Refactored the parser")
+        XCTAssertNil(plain?.mood)
+        XCTAssertTrue(plain?.isQuick ?? false)
+
+        // A note may optionally carry "how it went".
+        store.addQuick("Debugged a flaky test", kind: "note", mood: 3)
+        let withMood = store.entries(on: Date()).first { $0.detail == "Debugged a flaky test" }
+        XCTAssertEqual(withMood?.mood, 3)
+    }
+
     func testDeleteEntry() {
         let store = makeStore()
         let e = ReportEntry(date: Date())

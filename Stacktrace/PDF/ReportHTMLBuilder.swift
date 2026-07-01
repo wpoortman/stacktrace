@@ -141,6 +141,14 @@ enum ReportHTMLBuilder {
         if entry.quickKind == "fail" {
             return "<p class=\"item\">🔸 \(entry.detail.htmlEscaped)\(itemProject)</p>"
         }
+        if entry.quickKind == "note" {
+            let howItWent = entry.mood.map { m in
+                let i = max(1, min(5, m)) - 1
+                return " <span class=\"note-mood\">— \(["rough","tough","okay","good","great"][i])</span>"
+            } ?? ""
+            let icon = (entry.icon ?? "📝").htmlEscaped
+            return "<p class=\"item\">\(icon) \(entry.detail.htmlEscaped)\(howItWent)\(itemProject)</p>"
+        }
         if entry.isCheckin, let m = entry.mood {
             let i = max(1, min(5, m)) - 1
             let labels = ["Rough", "Tough", "Okay", "Good", "Great"]
@@ -241,6 +249,7 @@ enum ReportHTMLBuilder {
     }
     .detail { margin: 0 0 8px; }
     .item { margin: 4px 0 8px 12px; font-size: 12.5px; }
+    .note-mood { color: #6e6e73; font-size: 11px; }
     .mood { margin: 0 0 6px; color: #555; font-size: 11px; }
     .dayscore { margin: -4px 0 10px; color: #3a3a8c; font-size: 11px; }
     .holiday { margin: 0 0 10px; color: #0f7b86; font-size: 11px;

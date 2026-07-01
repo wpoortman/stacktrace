@@ -44,6 +44,9 @@ enum ReportMarkdownBuilder {
                     out += "- 🎉 \(entry.detail)\(proj)\n"
                 } else if entry.quickKind == "fail" {
                     out += "- 🔸 \(entry.detail)\(proj)\n"
+                } else if entry.quickKind == "note" {
+                    let how = entry.mood.map { " — \(["rough","tough","okay","good","great"][max(1, min(5, $0)) - 1])" } ?? ""
+                    out += "- \(entry.icon ?? "📝") \(entry.detail)\(how)\(proj)\n"
                 } else if entry.isCheckin, let m = entry.mood {
                     let i = max(1, min(5, m)) - 1
                     out += "- \(moodEmoji[i]) Felt \(["rough", "tough", "okay", "good", "great"][i])\(proj)\n"

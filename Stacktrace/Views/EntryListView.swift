@@ -55,6 +55,8 @@ struct EntryListView: View {
                                     }
                             }
                         }
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 3, leading: 8, bottom: 3, trailing: 8))
                     }
                     .onDelete(perform: delete)
                     .onMove { store.moveEntries(on: day, from: $0, to: $1) }
@@ -195,40 +197,50 @@ private struct EntryRow: View {
     let entry: ReportEntry
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(entry.title.isEmpty ? "Untitled" : entry.title)
-                    .font(.headline)
-                    .foregroundStyle(entry.title.isEmpty ? .secondary : .primary)
-                Spacer()
-            }
-            if !entry.detail.isEmpty {
-                Text(entry.detail)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-            }
-            if !entry.tags.isEmpty {
-                FlowLayout {
-                    ForEach(entry.tags, id: \.self) { TagChip(name: $0) }
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "square.and.pencil")
+                .font(.title2).foregroundStyle(.white)
+                .frame(width: 38, height: 38)
+                .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 9))
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(entry.title.isEmpty ? "Untitled" : entry.title)
+                        .font(.headline)
+                        .foregroundStyle(entry.title.isEmpty ? .secondary : .primary)
+                    Spacer()
                 }
+                if !entry.detail.isEmpty {
+                    Text(entry.detail)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+                if !entry.tags.isEmpty {
+                    FlowLayout {
+                        ForEach(entry.tags, id: \.self) { TagChip(name: $0) }
+                    }
+                }
+                HStack(spacing: 12) {
+                    if let mood = entry.mood {
+                        Label(MoodScale.label(mood), systemImage: MoodScale.symbol(mood))
+                            .foregroundStyle(MoodColor.color(for: mood))
+                    }
+                    if !entry.wentWell.isEmpty {
+                        Label("Went well", systemImage: "hand.thumbsup")
+                            .foregroundStyle(.green)
+                    }
+                    if !entry.wentBad.isEmpty {
+                        Label("To improve", systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(.orange)
+                    }
+                }
+                .font(.caption2)
             }
-            HStack(spacing: 12) {
-                if let mood = entry.mood {
-                    Label(MoodScale.label(mood), systemImage: MoodScale.symbol(mood))
-                        .foregroundStyle(MoodColor.color(for: mood))
-                }
-                if !entry.wentWell.isEmpty {
-                    Label("Went well", systemImage: "hand.thumbsup")
-                        .foregroundStyle(.green)
-                }
-                if !entry.wentBad.isEmpty {
-                    Label("To improve", systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.orange)
-                }
-            }
-            .font(.caption2)
+            Spacer(minLength: 0)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 10)
+        .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 11))
+        .contentShape(Rectangle())
     }
 }

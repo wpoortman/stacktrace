@@ -5,6 +5,14 @@ private struct Compose: Identifiable {
     let kind: String
 }
 
+/// Emoji icons a quick note can be tagged with. Emoji render identically in the
+/// app, the PDF (HTML) and copied Markdown, so no symbol mapping is needed.
+enum NoteIcon {
+    static let `default` = "📝"
+    static let options = ["📝", "💻", "🐛", "🔧", "🚀", "📞", "📧", "📄",
+                          "🎨", "🔍", "💡", "📊", "🤝", "✅", "⏳", "☕️"]
+}
+
 /// Three big actions: log a quick win, a setback, or open the full entry form.
 /// Win / setback open a small modal to capture the one-liner.
 struct QuickActions: View {
@@ -16,12 +24,14 @@ struct QuickActions: View {
 
     private let win = MoodColor.color(for: 5)
     private let bad = MoodColor.color(for: 2)
+    private let note = Color(red: 0.36, green: 0.42, blue: 0.55)
     private let exercise = Color(red: 0.20, green: 0.62, blue: 0.86)
 
     var body: some View {
         HStack(spacing: 12) {
             bigButton("Quick win", "party.popper.fill", win) { compose = Compose(kind: "win") }
             bigButton("Setback", "exclamationmark.triangle.fill", bad) { compose = Compose(kind: "fail") }
+            bigButton("Quick log", "note.text", note) { compose = Compose(kind: "note") }
             bigButton("Exercise", "figure.run", exercise) { showExercise = true }
             bigButton("Full entry", "square.and.pencil", .accentColor, action: onFullEntry)
         }
@@ -49,7 +59,7 @@ struct QuickActions: View {
     }
 }
 
-/// Modal to capture a single win / setback line.
+/// Modal to capture a single win / setback / note line.
 private struct QuickComposeSheet: View {
     let kind: String
     let day: Date
@@ -57,29 +67,78 @@ private struct QuickComposeSheet: View {
     @EnvironmentObject private var store: DataStore
     @Environment(\.dismiss) private var dismiss
     @State private var text = ""
+    @State private var mood: Int?
+    @State private var icon = NoteIcon.default
     @State private var project: UUID?
     @FocusState private var focused: Bool
 
     private var isWin: Bool { kind == "win" }
-    private var tint: Color { MoodColor.color(for: isWin ? 5 : 2) }
+    private var isNote: Bool { kind == "note" }
+
+    private var tint: Color {
+        switch kind {
+        case "win": return MoodColor.color(for: 5)
+        case "fail": return MoodColor.color(for: 2)
+        default: return Color(red: 0.36, green: 0.42, blue: 0.55)
+        }
+    }
+
+    private var symbol: String {
+        switch kind {
+        case "win": return "party.popper.fill"
+        case "fail": return "exclamationmark.triangle.fill"
+        default: return "note.text"
+        }
+    }
+
+    private var heading: String {
+        switch kind {
+        case "win": return "Add a win"
+        case "fail": return "Add a setback"
+        default: return "Quick log"
+        }
+    }
+
+    private var placeholder: String {
+        switch kind {
+        case "win": return "A small win…"
+        case "fail": return "A setback…"
+        default: return "What did you do?"
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 10) {
-                Image(systemName: isWin ? "party.popper.fill" : "exclamationmark.triangle.fill")
+                Image(systemName: symbol)
                     .font(.title2)
                     .foregroundStyle(.white)
                     .frame(width: 40, height: 40)
                     .background(tint, in: RoundedRectangle(cornerRadius: 10))
-                Text(isWin ? "Add a win" : "Add a setback")
+                Text(heading)
                     .font(.title3.bold())
             }
 
-            TextField(isWin ? "A small win…" : "A setback…", text: $text, axis: .vertical)
+            TextField(placeholder, text: $text, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .lineLimit(2...4)
                 .focused($focused)
                 .onSubmit(commit)
+
+            if isNote {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Icon")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    IconPicker(selection: $icon)
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("How it went (optional)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    MoodPicker(mood: $mood)
+                }
+            }
 
             if !store.projects.isEmpty {
                 Picker("Project", selection: $project) {
@@ -103,8 +162,41 @@ private struct QuickComposeSheet: View {
     }
 
     private func commit() {
-        store.addQuick(text, kind: kind, on: day, projectID: project)
+        store.addQuick(text, kind: kind, mood: mood,
+                       icon: isNote ? icon : nil, on: day, projectID: project)
         dismiss()
+    }
+}
+
+/// A wrapping grid of emoji to tag a quick note with.
+private struct IconPicker: View {
+    @Binding var selection: String
+
+    private let columns = [GridItem(.adaptive(minimum: 40), spacing: 6)]
+
+    var body: some View {
+        LazyVGrid(columns: columns, spacing: 6) {
+            ForEach(NoteIcon.options, id: \.self) { emoji in
+                let picked = selection == emoji
+                Button {
+                    selection = emoji
+                } label: {
+                    Text(emoji)
+                        .font(.title3)
+                        .frame(width: 40, height: 36)
+                        .background(
+                            picked ? Color.accentColor.opacity(0.20)
+                                   : Color.secondary.opacity(0.08),
+                            in: RoundedRectangle(cornerRadius: 8)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(picked ? Color.accentColor : .clear, lineWidth: 2)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 }
 
@@ -236,26 +328,52 @@ struct CheckinRow: View {
     }
 }
 
-/// Shared compact row for a quick win / setback item.
+/// Shared compact row for a quick win / setback / note item.
 struct QuickItemRow: View {
     let entry: ReportEntry
     var onDelete: () -> Void = {}
     @State private var hovering = false
 
-    private var isWin: Bool { entry.quickKind == "win" }
+    private var isNote: Bool { entry.quickKind == "note" }
 
-    private var tint: Color { isWin ? MoodColor.color(for: 5) : MoodColor.color(for: 2) }
+    private var symbol: String {
+        switch entry.quickKind {
+        case "win": return "party.popper.fill"
+        case "fail": return "exclamationmark.triangle.fill"
+        default: return "note.text"
+        }
+    }
+
+    private var tint: Color {
+        switch entry.quickKind {
+        case "win": return MoodColor.color(for: 5)
+        case "fail": return MoodColor.color(for: 2)
+        default:
+            // A note is neutral — tint by its mood if one was set, else gray.
+            if let m = entry.mood { return MoodColor.color(for: m) }
+            return Color(red: 0.36, green: 0.42, blue: 0.55)
+        }
+    }
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: isWin ? "party.popper.fill" : "exclamationmark.triangle.fill")
-                .font(.title2)
-                .foregroundStyle(.white)
-                .frame(width: 38, height: 38)
-                .background(tint, in: RoundedRectangle(cornerRadius: 9))
+            Group {
+                if isNote {
+                    Text(entry.icon ?? NoteIcon.default).font(.title3)
+                } else {
+                    Image(systemName: symbol).font(.title2).foregroundStyle(.white)
+                }
+            }
+            .frame(width: 38, height: 38)
+            .background(tint.opacity(isNote ? 0.16 : 1), in: RoundedRectangle(cornerRadius: 9))
 
             Text(entry.detail)
                 .font(.body)
+            if isNote, let m = entry.mood {
+                Text("· \(MoodScale.label(m).lowercased())")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
             Spacer()
             Button(role: .destructive, action: onDelete) {
                 Image(systemName: "xmark.circle.fill")

@@ -11,8 +11,11 @@ struct ReportEntry: Identifiable, Codable, Equatable {
     var tags: [String] = []
     /// How the work went, 1 (rough) … 5 (great). Optional = not yet rated.
     var mood: Int?
-    /// nil = full entry. "win" or "fail" = lightweight quick item (just `detail`).
+    /// nil = full entry. "win" / "fail" / "note" = lightweight quick item
+    /// (just `detail`, plus optional `mood`). "note" is neutral — no win/loss framing.
     var quickKind: String?
+    /// Optional emoji icon chosen for a quick "note" (renders in-app and in the PDF).
+    var icon: String?
     /// Set for a logged exercise activity (e.g. "Walk"), with `durationMinutes`.
     var exercise: String?
     var durationMinutes: Int?
@@ -342,15 +345,23 @@ final class DataStore: ObservableObject {
         save()
     }
 
-    /// Quick win / setback item — just a line of text, no full form. Wins read
-    /// positive (green), setbacks negative (orange) in the graph.
-    func addQuick(_ text: String, kind: String, on day: Date = Date(), projectID: UUID? = nil) {
+    /// Quick win / setback / note item — just a line of text, no full form.
+    /// Wins read positive (green), setbacks negative (orange) in the graph.
+    /// A "note" is neutral: it carries `mood` only if the user set one.
+    func addQuick(_ text: String, kind: String, mood: Int? = nil, icon: String? = nil,
+                  on day: Date = Date(), projectID: UUID? = nil) {
         let trimmed = text.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
         var e = ReportEntry(date: day)
         e.quickKind = kind
         e.detail = trimmed
-        e.mood = (kind == "win") ? 5 : 2
+        switch kind {
+        case "win": e.mood = 5
+        case "fail": e.mood = 2
+        default:
+            e.mood = mood   // "note" — neutral; only what the user chose
+            e.icon = icon
+        }
         e.projectID = projectID
         upsert(e)
     }
