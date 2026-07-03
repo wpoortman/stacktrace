@@ -2,6 +2,19 @@ import SwiftUI
 import Charts
 import AppKit
 
+/// The trend graphs that can be embedded in an export.
+enum TrendChart: String, CaseIterable, Identifiable {
+    case score, mood, activeMinutes
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .score: return "Overall day score"
+        case .mood: return "Average mood"
+        case .activeMinutes: return "Active minutes"
+        }
+    }
+}
+
 /// Renders the Trends charts to PNGs (base64) for embedding in the PDF, over a
 /// given date range. Mirrors the on-screen Trends look.
 @MainActor
@@ -32,7 +45,8 @@ enum TrendsChartRenderer {
         return out
     }
 
-    static func charts(_ store: DataStore, from: Date, to: Date) -> [ReportChart] {
+    static func charts(_ store: DataStore, from: Date, to: Date,
+                       kinds: Set<TrendChart> = Set(TrendChart.allCases)) -> [ReportChart] {
         let pts = points(store, from: from, to: to)
         // Nothing worth charting.
         guard pts.contains(where: { $0.score != nil || $0.mood != nil || $0.minutes > 0 }) else {
@@ -42,7 +56,7 @@ enum TrendsChartRenderer {
         var result: [ReportChart] = []
 
         let scorePts = pts.filter { $0.score != nil }
-        if !scorePts.isEmpty {
+        if kinds.contains(.score), !scorePts.isEmpty {
             let chart = Chart(scorePts) { p in
                 LineMark(x: .value("Day", p.date), y: .value("Score", p.score ?? 0))
                     .foregroundStyle(.blue).interpolationMethod(.catmullRom)
@@ -54,7 +68,7 @@ enum TrendsChartRenderer {
         }
 
         let moodPts = pts.filter { $0.mood != nil }
-        if !moodPts.isEmpty {
+        if kinds.contains(.mood), !moodPts.isEmpty {
             let chart = Chart(moodPts) { p in
                 LineMark(x: .value("Day", p.date), y: .value("Mood", p.mood ?? 0))
                     .foregroundStyle(.green).interpolationMethod(.catmullRom)
@@ -65,7 +79,7 @@ enum TrendsChartRenderer {
             if let b64 = render(chart) { result.append(ReportChart(title: "Average mood (/5)", pngBase64: b64)) }
         }
 
-        if pts.contains(where: { $0.minutes > 0 }) {
+        if kinds.contains(.activeMinutes), pts.contains(where: { $0.minutes > 0 }) {
             let chart = Chart(pts) { p in
                 BarMark(x: .value("Day", p.date), y: .value("Minutes", p.minutes))
                     .foregroundStyle(Color(red: 0.20, green: 0.62, blue: 0.86))

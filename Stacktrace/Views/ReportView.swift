@@ -16,6 +16,7 @@ struct ReportView: View {
     @State private var customName = ""
     @State private var note: String?
     @State private var selectedProject: UUID?
+    @State private var selectedCharts: Set<TrendChart> = Set(TrendChart.allCases)
 
     /// Called after a successful export so the host can reveal the Exports list.
     var onExported: () -> Void = {}
@@ -50,6 +51,26 @@ struct ReportView: View {
                 Picker("Project", selection: $selectedProject) {
                     Text("All entries").tag(UUID?.none)
                     ForEach(store.projects) { p in Text(p.name).tag(UUID?.some(p.id)) }
+                }
+            }
+
+            if pro.isPro && selectedProject == nil {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Trend graphs to include")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    HStack(spacing: 16) {
+                        ForEach(TrendChart.allCases) { chart in
+                            Toggle(chart.label, isOn: Binding(
+                                get: { selectedCharts.contains(chart) },
+                                set: { on in
+                                    if on { selectedCharts.insert(chart) }
+                                    else { selectedCharts.remove(chart) }
+                                }
+                            ))
+                            .toggleStyle(.checkbox)
+                        }
+                    }
                 }
             }
 
@@ -95,7 +116,7 @@ struct ReportView: View {
             }
         }
         .padding(24)
-        .frame(width: 480, height: 400)
+        .frame(width: 480, height: 460)
     }
 
     private func presetButton(_ title: String, _ unit: Calendar.Component, offset: Int) -> some View {
@@ -146,7 +167,7 @@ struct ReportView: View {
         isGenerating = true
         // Trends charts: Pro-only, and only for the all-entries report.
         let charts = (pro.isPro && selectedProject == nil)
-            ? TrendsChartRenderer.charts(store, from: startDate, to: endDate) : []
+            ? TrendsChartRenderer.charts(store, from: startDate, to: endDate, kinds: selectedCharts) : []
         let html = ReportHTMLBuilder.html(entries: d.entries, routines: d.routines,
                                           routineLogs: d.logs, dayRatings: d.ratings,
                                           holidays: d.holidays, projectNames: d.projectNames,
