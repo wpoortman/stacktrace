@@ -33,3 +33,22 @@ struct TagChip: View {
         }
     }
 }
+
+/// Small, muted pill showing which project an entry belongs to.
+struct ProjectChip: View {
+    let name: String
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "folder.fill")
+                .font(.system(size: 8))
+            Text(name)
+                .font(.caption2.weight(.medium))
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 7)
+        .padding(.vertical, 3)
+        .foregroundStyle(.secondary)
+        .background(Color.secondary.opacity(0.14), in: Capsule())
+    }
+}

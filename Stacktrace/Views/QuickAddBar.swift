@@ -332,6 +332,7 @@ struct CheckinRow: View {
 struct QuickItemRow: View {
     let entry: ReportEntry
     var onDelete: () -> Void = {}
+    @EnvironmentObject private var store: DataStore
     @State private var hovering = false
 
     private var isNote: Bool { entry.quickKind == "note" }
@@ -373,6 +374,9 @@ struct QuickItemRow: View {
                 Text("· \(MoodScale.label(m).lowercased())")
                     .font(.callout)
                     .foregroundStyle(.secondary)
+            }
+            if let project = store.projectName(entry.projectID) {
+                ProjectChip(name: project)
             }
             Spacer()
             Button(role: .destructive, action: onDelete) {

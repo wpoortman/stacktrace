@@ -18,6 +18,22 @@ struct MeetingsReview: View {
         return calendar.meetings(on: day).filter { !logged.contains($0.id) }
     }
 
+    /// Pending meetings grouped by their source calendar, in first-seen order.
+    private var groups: [CalendarGroup] {
+        var order: [String] = []
+        var byCal: [String: [CalendarMeeting]] = [:]
+        for m in pending {
+            if byCal[m.calendarTitle] == nil { order.append(m.calendarTitle) }
+            byCal[m.calendarTitle, default: []].append(m)
+        }
+        return order.map { title in
+            let items = byCal[title] ?? []
+            return CalendarGroup(title: title,
+                                 color: CalendarColor.from(items.first?.colorComponents),
+                                 meetings: items)
+        }
+    }
+
     var body: some View {
         Group {
             content
@@ -28,22 +44,32 @@ struct MeetingsReview: View {
     @ViewBuilder
     private var content: some View {
         if !pending.isEmpty {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 14) {
                 Label("Meetings to review", systemImage: "calendar")
                     .font(.headline)
-                ForEach(pending) { meeting in
-                    HStack(spacing: 10) {
-                        Image(systemName: "person.2.fill").foregroundStyle(.blue)
-                        Text(meeting.title).lineLimit(1)
-                        Spacer()
-                        Button("Didn't happen") {
-                            store.addMeeting(eventID: meeting.id, title: meeting.title,
-                                             happened: false, wentWell: "", wentBad: "",
-                                             mood: nil, on: day)
+                ForEach(groups) { group in
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 6) {
+                            Circle().fill(group.color).frame(width: 9, height: 9)
+                            Text(group.title)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.secondary)
                         }
-                        .buttonStyle(.borderless)
-                        Button("Log") { reflecting = meeting }
-                            .buttonStyle(.bordered)
+                        ForEach(group.meetings) { meeting in
+                            HStack(spacing: 10) {
+                                Image(systemName: "person.2.fill").foregroundStyle(group.color)
+                                Text(meeting.title).lineLimit(1)
+                                Spacer()
+                                Button("Didn't happen") {
+                                    store.addMeeting(eventID: meeting.id, title: meeting.title,
+                                                     happened: false, wentWell: "", wentBad: "",
+                                                     mood: nil, on: day)
+                                }
+                                .buttonStyle(.borderless)
+                                Button("Log") { reflecting = meeting }
+                                    .buttonStyle(.bordered)
+                            }
+                        }
                     }
                 }
             }
@@ -56,6 +82,23 @@ struct MeetingsReview: View {
                 MeetingReflectionSheet(day: day, meeting: meeting)
             }
         }
+    }
+}
+
+/// A day's pending meetings from one source calendar.
+private struct CalendarGroup: Identifiable {
+    var id: String { title }
+    let title: String
+    let color: Color
+    let meetings: [CalendarMeeting]
+}
+
+/// Builds a SwiftUI Color from a calendar's stored sRGB components.
+enum CalendarColor {
+    static func from(_ components: [Double]?) -> Color {
+        guard let c = components, c.count >= 3 else { return .blue }
+        return Color(.sRGB, red: c[0], green: c[1], blue: c[2],
+                     opacity: c.count >= 4 ? c[3] : 1)
     }
 }
 
@@ -122,6 +165,7 @@ private struct MeetingReflectionSheet: View {
 struct MeetingRow: View {
     let entry: ReportEntry
     var onDelete: () -> Void = {}
+    @EnvironmentObject private var store: DataStore
     @State private var hovering = false
 
     private var happened: Bool { entry.happened ?? true }
@@ -133,8 +177,13 @@ struct MeetingRow: View {
                 .frame(width: 38, height: 38)
                 .background(.blue, in: RoundedRectangle(cornerRadius: 9))
             VStack(alignment: .leading, spacing: 2) {
-                Text(entry.title.isEmpty ? "Meeting" : entry.title)
-                    .font(.body)
+                HStack(spacing: 6) {
+                    Text(entry.title.isEmpty ? "Meeting" : entry.title)
+                        .font(.body)
+                    if let project = store.projectName(entry.projectID) {
+                        ProjectChip(name: project)
+                    }
+                }
                 if !happened {
                     Text("Didn't happen").font(.caption).foregroundStyle(.secondary)
                 } else {

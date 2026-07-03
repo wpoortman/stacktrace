@@ -195,6 +195,7 @@ private struct DayExportSheet: View {
 
 private struct EntryRow: View {
     let entry: ReportEntry
+    @EnvironmentObject private var store: DataStore
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -207,6 +208,9 @@ private struct EntryRow: View {
                     Text(entry.title.isEmpty ? "Untitled" : entry.title)
                         .font(.headline)
                         .foregroundStyle(entry.title.isEmpty ? .secondary : .primary)
+                    if let project = store.projectName(entry.projectID) {
+                        ProjectChip(name: project)
+                    }
                     Spacer()
                 }
                 if !entry.detail.isEmpty {

@@ -3,9 +3,11 @@ import EventKit
 
 /// A calendar event surfaced for reflection.
 struct CalendarMeeting: Identifiable, Equatable {
-    let id: String      // EKEvent identifier
+    let id: String              // EKEvent identifier
     let title: String
     let start: Date
+    let calendarTitle: String   // the source calendar (e.g. "Work", "Personal")
+    let colorComponents: [Double]?  // sRGB rgba of the calendar's colour, if any
 }
 
 /// Reads meetings from the macOS Calendar via EventKit. Because macOS Calendar
@@ -55,8 +57,22 @@ final class CalendarService: ObservableObject {
         return store.events(matching: predicate)
             .filter { !$0.isAllDay }
             .sorted { $0.startDate < $1.startDate }
-            .map { CalendarMeeting(id: $0.eventIdentifier ?? UUID().uuidString,
-                                   title: ($0.title ?? "Meeting"),
-                                   start: $0.startDate) }
+            .map { event in
+                CalendarMeeting(id: event.eventIdentifier ?? UUID().uuidString,
+                                title: event.title ?? "Meeting",
+                                start: event.startDate,
+                                calendarTitle: event.calendar?.title ?? "Calendar",
+                                colorComponents: Self.rgba(event.calendar?.cgColor))
+            }
+    }
+
+    /// sRGB [r, g, b, a] for a calendar's colour, for tinting in the UI.
+    private static func rgba(_ cgColor: CGColor?) -> [Double]? {
+        guard let cgColor,
+              let converted = cgColor.converted(to: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                                intent: .defaultIntent, options: nil),
+              let c = converted.components, c.count >= 3 else { return nil }
+        let a = c.count >= 4 ? c[3] : 1
+        return [Double(c[0]), Double(c[1]), Double(c[2]), Double(a)]
     }
 }
