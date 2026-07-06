@@ -64,7 +64,9 @@ enum TrendsChartRenderer {
                     .foregroundStyle(.blue)
             }
             .chartYScale(domain: 0...10)
-            if let b64 = render(chart) { result.append(ReportChart(title: "Overall day score (/10)", pngBase64: b64)) }
+            let avg = Double(scorePts.compactMap(\.score).reduce(0, +)) / Double(scorePts.count)
+            let avgLabel = String(format: "%.1f", avg)
+            if let b64 = render(chart) { result.append(ReportChart(title: "Overall day score (avg \(avgLabel)/10)", pngBase64: b64)) }
         }
 
         let moodPts = pts.filter { $0.mood != nil }
