@@ -219,6 +219,7 @@ enum NotificationManager {
                 content.body = routine.name.isEmpty ? "Routine" : routine.name
                 content.sound = .default
                 content.categoryIdentifier = routineCategoryID
+                content.interruptionLevel = .timeSensitive
                 content.userInfo = ["routineID": routine.id.uuidString,
                                     "dismissAfter": routine.dismissAfter ?? 0]
                 let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
@@ -263,6 +264,7 @@ enum NotificationManager {
                             content.body = routine.name
                             content.sound = .default
                             content.categoryIdentifier = routineCategoryID
+                            content.interruptionLevel = .timeSensitive
                             content.userInfo = ["routineID": routine.id.uuidString,
                                                 "dismissAfter": routine.dismissAfter ?? 0]
                             var comps = DateComponents()

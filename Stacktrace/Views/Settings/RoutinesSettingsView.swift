@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 /// Manage movement / health routines: add, edit, delete.
 struct RoutinesSettingsView: View {
@@ -20,6 +21,19 @@ struct RoutinesSettingsView: View {
                 }
             }
             .padding(16)
+
+            Divider()
+
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: "info.circle").foregroundStyle(.secondary)
+                Text("Reminders vanish after a few seconds unless Stacktrace is set to **Alert** style. Set it to Alerts to keep them on screen so you can hit “Done”.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Button("Notification Settings", action: openNotificationSettings)
+                    .controlSize(.small)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
 
             Divider()
 
@@ -73,6 +87,12 @@ struct RoutinesSettingsView: View {
         }
         .sheet(item: $editing) { routine in
             RoutineEditor(routine: routine)
+        }
+    }
+
+    private func openNotificationSettings() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.notifications") {
+            NSWorkspace.shared.open(url)
         }
     }
 }
