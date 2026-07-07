@@ -57,6 +57,7 @@
 		BD445BDF3FBE84E5B2EB81D5 /* MCPCompatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 657C5BD8135450D96985CA73 /* MCPCompatTests.swift */; };
 		BE464083E90ADFBEEFCBA8C8 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE89C162EC4FB4D1F778DB34 /* FlowLayout.swift */; };
 		C65D6E832E8793FC64788312 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 55EEBD3B40F1D4545E4DB6DF /* PrivacyInfo.xcprivacy */; };
+		CA0BD1F24FD5BD22F0A36DF6 /* RoutineReminder.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD57ED9D80CCF19C97AEA26E /* RoutineReminder.swift */; };
 		D382505A463DF48078A0DAD9 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93371C7D3A3175672888CD59 /* NotificationManager.swift */; };
 		E135CFC700A33101871F87E3 /* MeetingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6A50C1ADBF72463286D4F56 /* MeetingsView.swift */; };
 		E18CF88A0F0640121086F43F /* ProjectsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D674DC445D4A9DF44868E42 /* ProjectsSettingsView.swift */; };
@@ -155,6 +156,7 @@
 		F341677A5EA6284F0E9005B9 /* SpellCheckTextEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpellCheckTextEditor.swift; sourceTree = "<group>"; };
 		F428405A957BE6D2F5E692A1 /* DeveloperSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeveloperSettingsView.swift; sourceTree = "<group>"; };
 		F9984BA5D0E1292D321276EA /* StorageLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageLocation.swift; sourceTree = "<group>"; };
+		FD57ED9D80CCF19C97AEA26E /* RoutineReminder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutineReminder.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -274,6 +276,7 @@
 				93371C7D3A3175672888CD59 /* NotificationManager.swift */,
 				AA6439C8B02955BE79EE6BD4 /* ReportExporter.swift */,
 				EF218961BEE7FEC8FC56AA80 /* Routine.swift */,
+				FD57ED9D80CCF19C97AEA26E /* RoutineReminder.swift */,
 				F9984BA5D0E1292D321276EA /* StorageLocation.swift */,
 				54D5AB329BCDC40ECB0A815A /* TeamAPI.swift */,
 				55A04F825EA39280B31A3021 /* TrendsChartRenderer.swift */,
@@ -432,6 +435,7 @@
 				60C35A87A9B028DDE518F74A /* ReportMarkdownBuilder.swift in Sources */,
 				8C6E0EDAA4F9E2A7C8A94E1C /* ReportView.swift in Sources */,
 				11646834899BB9020D27312E /* Routine.swift in Sources */,
+				CA0BD1F24FD5BD22F0A36DF6 /* RoutineReminder.swift in Sources */,
 				A0BB0CADA686A76AE1E2EA19 /* RoutinesSettingsView.swift in Sources */,
 				E203C91E21EE8140A8E6FB08 /* SearchView.swift in Sources */,
 				763B64F864087E86B13C37B5 /* SettingsView.swift in Sources */,

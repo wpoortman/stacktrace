@@ -66,18 +66,20 @@ struct ContentView: View {
         }
         .onAppear {
             NotificationManager.configure(store: store)
-            NotificationManager.pruneExpiredRoutineNotifications()
+            NotificationManager.clearLegacyRoutineNotifications()
+            RoutineReminder.shared.configure(store: store)
             applySchedule()
             refreshToday()
         }
         .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
             refreshToday()
+            RoutineReminder.shared.reschedule()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             refreshToday()
-            NotificationManager.pruneExpiredRoutineNotifications()
         }
         .onChange(of: store.holidays) { _, _ in applySchedule() }
+        .onChange(of: store.routines) { _, _ in RoutineReminder.shared.reschedule() }
         .sheet(isPresented: .init(get: { !didOnboard }, set: { _ in })) {
             OnboardingView()
         }
@@ -102,10 +104,11 @@ struct ContentView: View {
         if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil { return }
         if store.isOnHoliday() {
             NotificationManager.cancelAll()
+            RoutineReminder.shared.reschedule()  // clears timers while on holiday
         } else {
             NotificationManager.refresh()
-            NotificationManager.refreshRoutines(store.routines)
             NotificationManager.refreshDayScore()
+            RoutineReminder.shared.reschedule()
             AutoExport.runIfDue(store: store)
         }
     }

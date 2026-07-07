@@ -526,14 +526,13 @@ final class DataStore: ObservableObject {
             routines.append(routine)
         }
         save()
-        NotificationManager.refreshRoutines(routines)
+        // Reminder timers are rebuilt by the UI observing `routines`.
     }
 
     func deleteRoutine(_ routine: Routine) {
         routines.removeAll { $0.id == routine.id }
         routineLogs.removeAll { $0.routineID == routine.id }
         save()
-        NotificationManager.refreshRoutines(routines)
     }
 
     /// Times a routine was completed on a given day.
