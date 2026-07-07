@@ -9,6 +9,21 @@ final class RoutineTests: XCTestCase {
         XCTAssertEqual(r.dailyTarget, 4)
     }
 
+    func testMaxPerDayCapsSlots() {
+        var r = Routine(name: "Water")
+        r.cadence = "hourly"; r.startHour = 8; r.endHour = 20  // would be 13 slots
+        r.maxPerDay = 5
+        XCTAssertEqual(r.slots.map(\.hour), [8, 9, 10, 11, 12])
+        XCTAssertEqual(r.dailyTarget, 5)
+    }
+
+    func testMaxPerDayIgnoredWhenAboveWindow() {
+        var r = Routine(name: "Stretch")
+        r.cadence = "hourly"; r.startHour = 9; r.endHour = 11
+        r.maxPerDay = 10  // window only yields 3
+        XCTAssertEqual(r.slots.map(\.hour), [9, 10, 11])
+    }
+
     func testHourlyInterval() {
         var r = Routine(name: "Walk")
         r.cadence = "hourly"; r.startHour = 9; r.endHour = 17; r.hourStep = 2

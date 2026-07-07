@@ -65,7 +65,8 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            NotificationManager.configure()
+            NotificationManager.configure(store: store)
+            NotificationManager.pruneExpiredRoutineNotifications()
             applySchedule()
             refreshToday()
         }
@@ -74,6 +75,7 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             refreshToday()
+            NotificationManager.pruneExpiredRoutineNotifications()
         }
         .onChange(of: store.holidays) { _, _ in applySchedule() }
         .sheet(isPresented: .init(get: { !didOnboard }, set: { _ in })) {

@@ -1,12 +1,44 @@
 import Foundation
 import UserNotifications
 
-/// Presentation delegate so notifications also show while the app is frontmost.
+/// Presentation delegate so notifications also show while the app is frontmost,
+/// and to handle the "Done" action on routine reminders.
 private final class NotifDelegate: NSObject, UNUserNotificationCenterDelegate {
+    weak var store: DataStore?
+
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        // If this reminder has an auto-clear timer and the app is running to see
+        // it, remove it from Notification Center after the set delay.
+        scheduleAutoDismiss(for: notification, center: center)
         completionHandler([.banner, .sound, .list])
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler: @escaping () -> Void) {
+        let request = response.notification.request
+        let info = request.content.userInfo
+        if response.actionIdentifier == NotificationManager.doneActionID,
+           let idStr = info["routineID"] as? String, let rid = UUID(uuidString: idStr) {
+            Task { @MainActor in
+                if let store, let routine = store.routines.first(where: { $0.id == rid }),
+                   !store.isDone(routine, on: Date()) {
+                    store.logCompletion(routine)
+                }
+            }
+            center.removeDeliveredNotifications(withIdentifiers: [request.identifier])
+        }
+        completionHandler()
+    }
+
+    private func scheduleAutoDismiss(for notification: UNNotification, center: UNUserNotificationCenter) {
+        guard let secs = notification.request.content.userInfo["dismissAfter"] as? Int, secs > 0 else { return }
+        let id = notification.request.identifier
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double(secs)) {
+            center.removeDeliveredNotifications(withIdentifiers: [id])
+        }
     }
 }
 
@@ -15,9 +47,35 @@ private final class NotifDelegate: NSObject, UNUserNotificationCenterDelegate {
 enum NotificationManager {
     private static let delegate = NotifDelegate()
 
-    /// Install the presentation delegate. Call once at launch.
-    static func configure() {
-        UNUserNotificationCenter.current().delegate = delegate
+    static let routineCategoryID = "ROUTINE_REMINDER"
+    static let doneActionID = "ROUTINE_DONE"
+
+    /// Install the presentation delegate and the routine reminder category (with
+    /// its "Done" action). Call once at launch, passing the live data store so
+    /// the "Done" button can log the completion.
+    static func configure(store: DataStore? = nil) {
+        let center = UNUserNotificationCenter.current()
+        if let store { delegate.store = store }
+        center.delegate = delegate
+        let done = UNNotificationAction(identifier: doneActionID, title: "Done", options: [])
+        let category = UNNotificationCategory(identifier: routineCategoryID, actions: [done],
+                                              intentIdentifiers: [], options: [])
+        center.setNotificationCategories([category])
+    }
+
+    /// Clear routine reminders whose auto-clear delay has elapsed. Call when the
+    /// app becomes active, to catch reminders delivered while it was in the
+    /// background (where the foreground timer never ran).
+    static func pruneExpiredRoutineNotifications() {
+        let center = UNUserNotificationCenter.current()
+        center.getDeliveredNotifications { delivered in
+            let now = Date()
+            let expired = delivered.filter { n in
+                guard let secs = n.request.content.userInfo["dismissAfter"] as? Int, secs > 0 else { return false }
+                return now.timeIntervalSince(n.date) >= Double(secs)
+            }.map { $0.request.identifier }
+            if !expired.isEmpty { center.removeDeliveredNotifications(withIdentifiers: expired) }
+        }
     }
 
     /// Cancel all pending reminders (used during a holiday).
@@ -137,6 +195,47 @@ enum NotificationManager {
 
     private static let routinePrefix = "routine-"
 
+    /// Fire a routine's reminder once, ~2s from now, so the user can preview the
+    /// banner, its "Done" button, and the auto-clear behaviour. Reports back a
+    /// short status message.
+    static func simulateRoutine(_ routine: Routine, _ result: @escaping (String) -> Void) {
+        configure()
+        let center = UNUserNotificationCenter.current()
+        func report(_ s: String) { DispatchQueue.main.async { result(s) } }
+
+        center.getNotificationSettings { settings in
+            if settings.authorizationStatus == .denied {
+                report("Notifications are off for Stacktrace. Enable them in System Settings → Notifications.")
+                return
+            }
+            center.requestAuthorization(options: [.alert, .sound]) { granted, error in
+                if let error { report("Error: \(error.localizedDescription)"); return }
+                guard granted else {
+                    report("Permission wasn't granted. Try a signed build in /Applications.")
+                    return
+                }
+                let content = UNMutableNotificationContent()
+                content.title = "Time to move"
+                content.body = routine.name.isEmpty ? "Routine" : routine.name
+                content.sound = .default
+                content.categoryIdentifier = routineCategoryID
+                content.userInfo = ["routineID": routine.id.uuidString,
+                                    "dismissAfter": routine.dismissAfter ?? 0]
+                let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
+                let request = UNNotificationRequest(identifier: "\(routinePrefix)sim-\(UUID().uuidString)",
+                                                    content: content, trigger: trigger)
+                center.add(request) { addError in
+                    if let addError { report("Couldn't schedule: \(addError.localizedDescription)") }
+                    else {
+                        let clear = (routine.dismissAfter ?? 0) > 0
+                            ? " It auto-clears after \(routine.dismissAfter!)s." : ""
+                        report("Sent — appears in ~2s. Try the Done button.\(clear)")
+                    }
+                }
+            }
+        }
+    }
+
     /// Reschedule reminders for all routines. Daily routines fire once at their
     /// start hour; hourly routines fire each hour within their window.
     static func refreshRoutines(_ routines: [Routine]) {
@@ -163,6 +262,9 @@ enum NotificationManager {
                             content.title = "Time to move"
                             content.body = routine.name
                             content.sound = .default
+                            content.categoryIdentifier = routineCategoryID
+                            content.userInfo = ["routineID": routine.id.uuidString,
+                                                "dismissAfter": routine.dismissAfter ?? 0]
                             var comps = DateComponents()
                             comps.hour = slot.hour
                             comps.minute = slot.minute

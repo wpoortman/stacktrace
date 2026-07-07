@@ -13,9 +13,15 @@ struct Routine: Identifiable, Codable, Equatable {
     var endMinute: Int?
     /// Hourly interval — every N hours within the window. nil/0 = every hour.
     var hourStep: Int?
+    /// Cap on how many times an hourly routine fires per day. nil = as many as
+    /// fit the window.
+    var maxPerDay: Int?
     /// Calendar weekdays (1=Sun … 7=Sat) the routine runs on. nil = every day.
     var weekdays: [Int]?
     var remind: Bool = true
+    /// Seconds a delivered reminder stays before auto-clearing. nil/0 = stays
+    /// until dismissed.
+    var dismissAfter: Int?
     var includeInReport: Bool = true
     var createdAt = Date()
 
@@ -36,7 +42,12 @@ struct Routine: Identifiable, Codable, Equatable {
             out.append(Slot(hour: h, minute: sMin))
             h += step
         }
-        return out.isEmpty ? [Slot(hour: startHour, minute: sMin)] : out
+        if out.isEmpty { out = [Slot(hour: startHour, minute: sMin)] }
+        // Optional per-day cap keeps the earliest N times.
+        if let cap = maxPerDay, cap > 0, out.count > cap {
+            out = Array(out.prefix(cap))
+        }
+        return out
     }
 
     /// How many times a day this routine is "complete".
@@ -58,7 +69,8 @@ struct Routine: Identifiable, Codable, Equatable {
         }
         if isHourly {
             let base = step == 1 ? "Hourly" : "Every \(step)h"
-            return "\(base) \(Self.time(startHour, sMin))–\(Self.time(endHour, eMin))\(dayPart)"
+            let cap = (maxPerDay ?? 0) > 0 ? " · up to \(maxPerDay!)×" : ""
+            return "\(base) \(Self.time(startHour, sMin))–\(Self.time(endHour, eMin))\(cap)\(dayPart)"
         }
         return "Daily \(Self.time(startHour, sMin))\(dayPart)"
     }

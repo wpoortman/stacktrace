@@ -4,6 +4,7 @@ import SwiftUI
 struct RoutinesSettingsView: View {
     @EnvironmentObject private var store: DataStore
     @State private var editing: Routine?
+    @State private var simNote: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -41,6 +42,13 @@ struct RoutinesSettingsView: View {
                             Spacer()
                             if routine.remind {
                                 Image(systemName: "bell.fill").foregroundStyle(.secondary)
+                                Button {
+                                    NotificationManager.simulateRoutine(routine) { simNote = $0 }
+                                } label: {
+                                    Label("Simulate", systemImage: "play.circle")
+                                }
+                                .buttonStyle(.borderless)
+                                .help("Fire this reminder now to preview it")
                             }
                             if routine.includeInReport {
                                 Image(systemName: "doc.text").foregroundStyle(.secondary)
@@ -52,6 +60,16 @@ struct RoutinesSettingsView: View {
                 }
                 .listStyle(.inset)
             }
+
+            if let simNote {
+                Divider()
+                Text(simNote)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .sheet(item: $editing) { routine in
             RoutineEditor(routine: routine)
@@ -62,9 +80,11 @@ struct RoutinesSettingsView: View {
 private struct RoutineEditor: View {
     @State var routine: Routine
     @State private var stepHours = 1
+    @State private var maxPerDay = 0
     @State private var activeDays: Set<Int> = Set(1...7)
     @State private var startTime = Date()
     @State private var endTime = Date()
+    @State private var dismissAfter = 0
     @EnvironmentObject private var store: DataStore
     @Environment(\.dismiss) private var dismiss
 
@@ -91,6 +111,9 @@ private struct RoutineEditor: View {
                         DatePicker("To", selection: $endTime, displayedComponents: .hourAndMinute)
                         Stepper("Every \(stepHours) hour\(stepHours == 1 ? "" : "s")",
                                 value: $stepHours, in: 1...12)
+                        Stepper(maxPerDay == 0 ? "No limit (fills the window)"
+                                               : "At most \(maxPerDay)× per day",
+                                value: $maxPerDay, in: 0...50)
                     } else {
                         DatePicker("At", selection: $startTime, displayedComponents: .hourAndMinute)
                     }
@@ -109,7 +132,21 @@ private struct RoutineEditor: View {
                 }
                 Section {
                     Toggle("Remind me", isOn: $routine.remind)
+                    if routine.remind {
+                        Picker("Auto-clear notification", selection: $dismissAfter) {
+                            Text("Keep until dismissed").tag(0)
+                            Text("After 30 seconds").tag(30)
+                            Text("After 1 minute").tag(60)
+                            Text("After 2 minutes").tag(120)
+                            Text("After 5 minutes").tag(300)
+                        }
+                    }
                     Toggle("Include in PDF report", isOn: $routine.includeInReport)
+                } footer: {
+                    if routine.remind {
+                        Text("The reminder has a “Done” button so you can mark it complete without opening the app. Auto-clear removes it from Notification Center after the chosen time (while the app is running).")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
                 }
             }
             .formStyle(.grouped)
@@ -135,6 +172,8 @@ private struct RoutineEditor: View {
         .frame(width: 460, height: 540)
         .onAppear {
             stepHours = routine.step
+            maxPerDay = routine.maxPerDay ?? 0
+            dismissAfter = routine.dismissAfter ?? 0
             activeDays = Set(routine.weekdays ?? Array(1...7))
             let cal = Calendar.current
             startTime = cal.date(bySettingHour: routine.startHour, minute: routine.sMin, second: 0, of: Date()) ?? Date()
@@ -172,7 +211,9 @@ private struct RoutineEditor: View {
             routine.endMinute = routine.startMinute
         }
         routine.hourStep = stepHours <= 1 ? nil : stepHours
+        routine.maxPerDay = (routine.isHourly && maxPerDay > 0) ? maxPerDay : nil
         routine.weekdays = activeDays.count == 7 ? nil : activeDays.sorted()
+        routine.dismissAfter = dismissAfter == 0 ? nil : dismissAfter
         store.upsertRoutine(routine)
         dismiss()
     }
