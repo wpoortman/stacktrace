@@ -70,6 +70,8 @@ private struct QuickComposeSheet: View {
     @State private var mood: Int?
     @State private var icon = NoteIcon.default
     @State private var project: UUID?
+    @State private var enhancing = false
+    @State private var enhanceError: String?
     @FocusState private var focused: Bool
 
     private var isWin: Bool { kind == "win" }
@@ -125,6 +127,10 @@ private struct QuickComposeSheet: View {
                 .focused($focused)
                 .onSubmit(commit)
 
+            EnhanceButton(enhancing: enhancing, error: enhanceError,
+                          canRun: !text.trimmingCharacters(in: .whitespaces).isEmpty,
+                          action: enhance)
+
             if isNote {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Icon")
@@ -165,6 +171,21 @@ private struct QuickComposeSheet: View {
         store.addQuick(text, kind: kind, mood: mood,
                        icon: isNote ? icon : nil, on: day, projectID: project)
         dismiss()
+    }
+
+    private func enhance() {
+        enhanceError = nil
+        enhancing = true
+        let snapshot = EntryText(title: "", detail: text, wentWell: "", wentBad: "")
+        Task {
+            do {
+                let result = try await EnhancementService.enhance(snapshot)
+                text = result.detail
+            } catch {
+                enhanceError = error.localizedDescription
+            }
+            enhancing = false
+        }
     }
 }
 

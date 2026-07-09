@@ -5,6 +5,7 @@ import SwiftUI
 struct AISettingsView: View {
     @State private var apiKey: String = ""
     @AppStorage(AIConfig.modelDefaultsKey) private var model: String = AIConfig.defaultModel
+    @AppStorage(AIConfig.instructionsKey) private var instructions: String = ""
 
     @State private var status: Status = .idle
     enum Status: Equatable { case idle, verifying, ok, failed(String) }
@@ -32,6 +33,29 @@ struct AISettingsView: View {
                 TextField("Model", text: $model)
                     .textFieldStyle(.roundedBorder)
                 Text("Default \(AIConfig.defaultModel) — cheap and good for text cleanup.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                ZStack(alignment: .topLeading) {
+                    if instructions.isEmpty {
+                        Text("Describe the tone and style you want the AI to use…")
+                            .foregroundStyle(.tertiary)
+                            .padding(.top, 8)
+                            .padding(.leading, 7)
+                    }
+                    SpellCheckTextEditor(text: $instructions)
+                        .padding(4)
+                }
+                .frame(height: 90)
+                .background(Color(nsColor: .textBackgroundColor),
+                            in: RoundedRectangle(cornerRadius: 6))
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color(nsColor: .separatorColor)))
+            } header: {
+                Text("Style instructions")
+            } footer: {
+                Text("Optional. Added to every Enhance request to steer tone of voice and style — e.g. “Keep it concise and upbeat, in British English.” The AI still won't invent facts or change your meaning.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

@@ -15,6 +15,8 @@ struct QuickItemEditSheet: View {
     @State private var mood: Int?
     @State private var icon: String
     @State private var project: UUID?
+    @State private var enhancing = false
+    @State private var enhanceError: String?
 
     init(entry: ReportEntry) {
         _entry = State(initialValue: entry)
@@ -41,6 +43,10 @@ struct QuickItemEditSheet: View {
             TextField("Text", text: $text, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .lineLimit(2...4)
+
+            EnhanceButton(enhancing: enhancing, error: enhanceError,
+                          canRun: !text.trimmingCharacters(in: .whitespaces).isEmpty,
+                          action: enhance)
 
             if isNote {
                 VStack(alignment: .leading, spacing: 6) {
@@ -77,6 +83,21 @@ struct QuickItemEditSheet: View {
         entry.projectID = project
         store.upsert(entry)
         dismiss()
+    }
+
+    private func enhance() {
+        enhanceError = nil
+        enhancing = true
+        let snapshot = EntryText(title: "", detail: text, wentWell: "", wentBad: "")
+        Task {
+            do {
+                let result = try await EnhancementService.enhance(snapshot)
+                text = result.detail
+            } catch {
+                enhanceError = error.localizedDescription
+            }
+            enhancing = false
+        }
     }
 }
 
@@ -161,6 +182,8 @@ struct MeetingEditSheet: View {
     @State private var mood: Int?
     @State private var wentWell: String
     @State private var wentBad: String
+    @State private var enhancing = false
+    @State private var enhanceError: String?
 
     init(entry: ReportEntry) {
         _entry = State(initialValue: entry)
@@ -169,6 +192,11 @@ struct MeetingEditSheet: View {
         _mood = State(initialValue: entry.mood)
         _wentWell = State(initialValue: entry.wentWell)
         _wentBad = State(initialValue: entry.wentBad)
+    }
+
+    private var hasNotes: Bool {
+        !(wentWell.trimmingCharacters(in: .whitespaces).isEmpty
+          && wentBad.trimmingCharacters(in: .whitespaces).isEmpty)
     }
 
     var body: some View {
@@ -182,6 +210,8 @@ struct MeetingEditSheet: View {
                 MoodPicker(mood: $mood)
                 field("What went well", text: $wentWell)
                 field("What didn't / to improve", text: $wentBad)
+                EnhanceButton(enhancing: enhancing, error: enhanceError,
+                              canRun: hasNotes, action: enhance)
             }
 
             EditorButtons(entry: entry, canSave: true, onSave: save)
@@ -210,6 +240,49 @@ struct MeetingEditSheet: View {
         entry.wentBad = happened ? wentBad : ""
         store.upsert(entry)
         dismiss()
+    }
+
+    private func enhance() {
+        enhanceError = nil
+        enhancing = true
+        let snapshot = EntryText(title: "", detail: "", wentWell: wentWell, wentBad: wentBad)
+        Task {
+            do {
+                let result = try await EnhancementService.enhance(snapshot)
+                wentWell = result.wentWell
+                wentBad = result.wentBad
+            } catch {
+                enhanceError = error.localizedDescription
+            }
+            enhancing = false
+        }
+    }
+}
+
+/// Small "Enhance with AI" button + inline error, shared by the editors and the
+/// quick-add compose sheet. Hidden entirely when no API key is configured.
+struct EnhanceButton: View {
+    let enhancing: Bool
+    let error: String?
+    let canRun: Bool
+    let action: () -> Void
+
+    var body: some View {
+        if AIConfig.apiKey?.isEmpty == false {
+            VStack(alignment: .leading, spacing: 4) {
+                Button(action: action) {
+                    if enhancing {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Label("Enhance with AI", systemImage: "sparkles")
+                    }
+                }
+                .disabled(enhancing || !canRun)
+                if let error {
+                    Text(error).font(.caption).foregroundStyle(.red)
+                }
+            }
+        }
     }
 }
 

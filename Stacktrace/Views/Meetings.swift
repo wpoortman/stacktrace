@@ -112,6 +112,13 @@ private struct MeetingReflectionSheet: View {
     @State private var wentWell = ""
     @State private var wentBad = ""
     @State private var mood: Int?
+    @State private var enhancing = false
+    @State private var enhanceError: String?
+
+    private var hasNotes: Bool {
+        !(wentWell.trimmingCharacters(in: .whitespaces).isEmpty
+          && wentBad.trimmingCharacters(in: .whitespaces).isEmpty)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -129,6 +136,8 @@ private struct MeetingReflectionSheet: View {
             MoodPicker(mood: $mood)
             field("What went well", text: $wentWell)
             field("What didn't / to improve", text: $wentBad)
+            EnhanceButton(enhancing: enhancing, error: enhanceError,
+                          canRun: hasNotes, action: enhance)
 
             HStack {
                 Spacer()
@@ -146,6 +155,22 @@ private struct MeetingReflectionSheet: View {
         }
         .padding(20)
         .frame(width: 440)
+    }
+
+    private func enhance() {
+        enhanceError = nil
+        enhancing = true
+        let snapshot = EntryText(title: "", detail: "", wentWell: wentWell, wentBad: wentBad)
+        Task {
+            do {
+                let result = try await EnhancementService.enhance(snapshot)
+                wentWell = result.wentWell
+                wentBad = result.wentBad
+            } catch {
+                enhanceError = error.localizedDescription
+            }
+            enhancing = false
+        }
     }
 
     private func field(_ label: String, text: Binding<String>) -> some View {

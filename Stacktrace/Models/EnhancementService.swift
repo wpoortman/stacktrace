@@ -4,10 +4,18 @@ import Foundation
 enum AIConfig {
     static let keychainAccount = "openai-api-key"
     static let modelDefaultsKey = "openAIModel"
+    static let instructionsKey = "aiCustomInstructions"
     static let defaultModel = "gpt-4o-mini"
 
     static var apiKey: String? {
         Keychain.get(account: keychainAccount)
+    }
+
+    /// Optional user instructions (tone of voice, style) added to the enhance
+    /// prompt. Trimmed; empty when unset.
+    static var customInstructions: String {
+        (UserDefaults.standard.string(forKey: instructionsKey) ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     static var model: String {
@@ -65,7 +73,7 @@ enum EnhancementService {
         if !input.wentBad.isEmpty { fields["wentBad"] = input.wentBad }
         guard !fields.isEmpty else { return input }
 
-        let system = """
+        var system = """
         You are an editor for short work-report notes. For each field, fix \
         spelling and grammar and lightly polish the phrasing for clarity and a \
         professional tone. Preserve the author's original meaning, first-person \
@@ -73,6 +81,16 @@ enum EnhancementService {
         information, or merge fields. Return ONLY a JSON object containing \
         exactly the same keys you were given, each mapped to its improved text.
         """
+        let instructions = AIConfig.customInstructions
+        if !instructions.isEmpty {
+            system += """
+
+
+            Additional style instructions from the user — follow these for tone \
+            and voice, but still never invent facts or change the meaning:
+            \(instructions)
+            """
+        }
 
         let payloadJSON = try JSONSerialization.data(withJSONObject: fields)
         let userContent = String(data: payloadJSON, encoding: .utf8) ?? "{}"
