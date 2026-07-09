@@ -8,6 +8,7 @@ struct EntryListView: View {
     @EnvironmentObject private var store: DataStore
     @State private var editing: ReportEntry?
     @State private var editingIsNew = false
+    @State private var editingItem: ReportEntry?
     @State private var exporting = false
 
     private var entries: [ReportEntry] { store.entries(on: day) }
@@ -28,35 +29,15 @@ struct EntryListView: View {
             } else {
                 List {
                     ForEach(entries) { entry in
-                        Group {
-                            if entry.isMeeting {
-                                MeetingRow(entry: entry) { store.delete(entry) }
-                            } else if entry.isExercise {
-                                ExerciseRow(entry: entry) { store.delete(entry) }
-                            } else if entry.isQuick {
-                                QuickItemRow(entry: entry) { store.delete(entry) }
-                            } else if entry.isCheckin {
-                                CheckinRow(entry: entry) { store.delete(entry) }
-                            } else {
-                                EntryRow(entry: entry)
-                                    .contentShape(Rectangle())
-                                    .onTapGesture {
-                                        editingIsNew = false
-                                        editing = entry
-                                    }
-                                    .contextMenu {
-                                        Button("Edit") {
-                                            editingIsNew = false
-                                            editing = entry
-                                        }
-                                        Button("Delete", role: .destructive) {
-                                            store.delete(entry)
-                                        }
-                                    }
+                        rowView(entry)
+                            .contentShape(Rectangle())
+                            .onTapGesture { edit(entry) }
+                            .contextMenu {
+                                Button("Edit") { edit(entry) }
+                                Button("Delete", role: .destructive) { store.delete(entry) }
                             }
-                        }
-                        .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets(top: 3, leading: 8, bottom: 3, trailing: 8))
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 3, leading: 8, bottom: 3, trailing: 8))
                     }
                     .onDelete(perform: delete)
                     .onMove { store.moveEntries(on: day, from: $0, to: $1) }
@@ -86,8 +67,49 @@ struct EntryListView: View {
         .sheet(item: $editing) { entry in
             EntryEditorView(entry: entry, isNew: editingIsNew)
         }
+        .sheet(item: $editingItem) { item in
+            itemEditor(item)
+        }
         .sheet(isPresented: $exporting) {
             DayExportSheet(day: day)
+        }
+    }
+
+    @ViewBuilder
+    private func rowView(_ entry: ReportEntry) -> some View {
+        if entry.isMeeting {
+            MeetingRow(entry: entry) { store.delete(entry) }
+        } else if entry.isExercise {
+            ExerciseRow(entry: entry) { store.delete(entry) }
+        } else if entry.isQuick {
+            QuickItemRow(entry: entry) { store.delete(entry) }
+        } else if entry.isCheckin {
+            CheckinRow(entry: entry) { store.delete(entry) }
+        } else {
+            EntryRow(entry: entry)
+        }
+    }
+
+    /// The full form for full entries; a compact type-specific sheet otherwise.
+    @ViewBuilder
+    private func itemEditor(_ entry: ReportEntry) -> some View {
+        if entry.isMeeting {
+            MeetingEditSheet(entry: entry)
+        } else if entry.isExercise {
+            ExerciseEditSheet(entry: entry)
+        } else if entry.isCheckin {
+            CheckinEditSheet(entry: entry)
+        } else {
+            QuickItemEditSheet(entry: entry)
+        }
+    }
+
+    private func edit(_ entry: ReportEntry) {
+        if entry.isMeeting || entry.isExercise || entry.isQuick || entry.isCheckin {
+            editingItem = entry
+        } else {
+            editingIsNew = false
+            editing = entry
         }
     }
 

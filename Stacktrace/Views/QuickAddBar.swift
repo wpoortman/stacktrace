@@ -169,7 +169,7 @@ private struct QuickComposeSheet: View {
 }
 
 /// A wrapping grid of emoji to tag a quick note with.
-private struct IconPicker: View {
+struct IconPicker: View {
     @Binding var selection: String
 
     private let columns = [GridItem(.adaptive(minimum: 40), spacing: 6)]
