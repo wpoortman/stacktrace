@@ -129,6 +129,61 @@ enum EnhancementService {
         )
     }
 
+    /// Summarize a whole report into a short, readable TL;DR paragraph.
+    static func summarize(_ reportText: String) async throws -> String {
+        guard let key = AIConfig.apiKey, !key.isEmpty else {
+            throw EnhancementError.noKey
+        }
+        let trimmed = reportText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "" }
+
+        var system = """
+        You summarize a personal work report into a short TL;DR for a manager. \
+        Write ONE concise, readable paragraph (about 3–5 sentences) in the \
+        first person, covering the main accomplishments and progress and noting \
+        any significant setbacks. Do not invent facts or add anything not in the \
+        report. Return plain text only — no markdown, headings, or preamble.
+        """
+        let instructions = AIConfig.customInstructions
+        if !instructions.isEmpty {
+            system += """
+
+
+            Additional style instructions from the user — follow these for tone \
+            and voice, but still never invent facts:
+            \(instructions)
+            """
+        }
+
+        let body: [String: Any] = [
+            "model": AIConfig.model,
+            "temperature": 0.4,
+            "messages": [
+                ["role": "system", "content": system],
+                ["role": "user", "content": trimmed],
+            ],
+        ]
+
+        var request = URLRequest(url: URL(string: "https://api.openai.com/v1/chat/completions")!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw EnhancementError.badResponse }
+        guard (200..<300).contains(http.statusCode) else {
+            throw EnhancementError.http(http.statusCode, extractAPIError(from: data) ?? "request failed")
+        }
+        guard
+            let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let choices = root["choices"] as? [[String: Any]],
+            let message = choices.first?["message"] as? [String: Any],
+            let content = message["content"] as? String
+        else { throw EnhancementError.badResponse }
+        return content.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     /// Lightweight key check used by the Settings "Verify" button.
     static func verifyKey() async throws {
         _ = try await enhance(EntryText(title: "ok", detail: "", wentWell: "", wentBad: ""))

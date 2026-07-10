@@ -53,10 +53,12 @@ struct QuickItemEditSheet: View {
                     Text("Icon").font(.caption).foregroundStyle(.secondary)
                     IconPicker(selection: $icon)
                 }
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("How it went (optional)").font(.caption).foregroundStyle(.secondary)
-                    MoodPicker(mood: $mood)
-                }
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(isNote ? "How it went (optional)" : "Mood — feeds the mood graph")
+                    .font(.caption).foregroundStyle(.secondary)
+                MoodPicker(mood: $mood)
             }
 
             if !store.projects.isEmpty {
@@ -76,10 +78,8 @@ struct QuickItemEditSheet: View {
 
     private func save() {
         entry.detail = text.trimmingCharacters(in: .whitespaces)
-        if isNote {
-            entry.mood = mood
-            entry.icon = icon
-        }
+        entry.mood = mood
+        if isNote { entry.icon = icon }
         entry.projectID = project
         store.upsert(entry)
         dismiss()
@@ -109,11 +109,13 @@ struct ExerciseEditSheet: View {
     @State private var entry: ReportEntry
     @State private var name: String
     @State private var minutes: Int
+    @State private var mood: Int?
 
     init(entry: ReportEntry) {
         _entry = State(initialValue: entry)
         _name = State(initialValue: entry.exercise ?? "")
         _minutes = State(initialValue: entry.durationMinutes ?? 20)
+        _mood = State(initialValue: entry.mood)
     }
 
     var body: some View {
@@ -123,6 +125,12 @@ struct ExerciseEditSheet: View {
             TextField("Name", text: $name).textFieldStyle(.roundedBorder)
             Stepper(value: $minutes, in: 1...240, step: 5) {
                 Text("Duration: \(minutes) min")
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Mood — feeds the mood graph (optional)")
+                    .font(.caption).foregroundStyle(.secondary)
+                MoodPicker(mood: $mood)
             }
 
             EditorButtons(entry: entry,
@@ -136,6 +144,7 @@ struct ExerciseEditSheet: View {
     private func save() {
         entry.exercise = name.trimmingCharacters(in: .whitespaces)
         entry.durationMinutes = minutes
+        entry.mood = mood
         store.upsert(entry)
         dismiss()
     }

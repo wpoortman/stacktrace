@@ -16,6 +16,7 @@ enum ReportHTMLBuilder {
                      holidays: [HolidayPeriod] = [],
                      projectNames: [UUID: String] = [:],
                      charts: [ReportChart] = [],
+                     summary: String = "",
                      from start: Date, to end: Date) -> String {
         let cal = Calendar.current
 
@@ -60,6 +61,13 @@ enum ReportHTMLBuilder {
             }
             trends += "</section>"
             body = trends + body
+        }
+
+        // TL;DR summary sits at the very top, above trends and days.
+        let trimmedSummary = summary.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedSummary.isEmpty {
+            body = "<section class=\"summary\"><h2>Summary</h2>"
+                + "<p>\(trimmedSummary.htmlParagraphs)</p></section>" + body
         }
 
         let count = entries.count
@@ -272,6 +280,11 @@ enum ReportHTMLBuilder {
     .note.bad { background: #fdf0e8; }
     .note.bad .note-label { color: #b5530f; }
     .empty { color: #6e6e73; font-style: italic; }
+    .summary { margin: 0 0 22px; padding: 12px 14px; background: #f5f7fb;
+      border-left: 3px solid #3a3a8c; border-radius: 6px; }
+    .summary h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em;
+      color: #3a3a8c; margin: 0 0 6px; }
+    .summary p { margin: 0; }
     .trends { margin: 0 0 22px; }
     .trends h2 { font-size: 14px; background: #f2f2f4; padding: 6px 10px; border-radius: 5px; margin: 0 0 10px; }
     .chart-title { font-size: 11px; font-weight: 600; color: #555; margin: 8px 0 2px; }

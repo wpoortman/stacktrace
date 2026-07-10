@@ -138,12 +138,13 @@ private struct QuickComposeSheet: View {
                         .foregroundStyle(.secondary)
                     IconPicker(selection: $icon)
                 }
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("How it went (optional)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    MoodPicker(mood: $mood)
-                }
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(isNote ? "How it went (optional)" : "Mood — feeds the mood graph")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                MoodPicker(mood: $mood)
             }
 
             if !store.projects.isEmpty {
@@ -164,7 +165,10 @@ private struct QuickComposeSheet: View {
         }
         .padding(20)
         .frame(width: 380)
-        .onAppear { focused = true }
+        .onAppear {
+            focused = true
+            if mood == nil { mood = kind == "win" ? 5 : (kind == "fail" ? 2 : nil) }
+        }
     }
 
     private func commit() {
@@ -234,6 +238,7 @@ struct ExerciseWizard: View {
     @State private var choice = "Walk"
     @State private var custom = ""
     @State private var minutes = 20
+    @State private var mood: Int?
 
     private var name: String { choice == "Other" ? custom : choice }
 
@@ -258,11 +263,17 @@ struct ExerciseWizard: View {
                 Text("Duration: \(minutes) min")
             }
 
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Mood — feeds the mood graph (optional)")
+                    .font(.caption).foregroundStyle(.secondary)
+                MoodPicker(mood: $mood)
+            }
+
             HStack {
                 Spacer()
                 Button("Cancel", role: .cancel) { dismiss() }
                 Button("Add") {
-                    store.addExercise(name, minutes: minutes, on: day)
+                    store.addExercise(name, minutes: minutes, mood: mood, on: day)
                     dismiss()
                 }
                 .keyboardShortcut(.defaultAction)
@@ -368,8 +379,8 @@ struct QuickItemRow: View {
 
     private var tint: Color {
         switch entry.quickKind {
-        case "win": return MoodColor.color(for: 5)
-        case "fail": return MoodColor.color(for: 2)
+        case "win": return MoodColor.color(for: entry.mood ?? 5)
+        case "fail": return MoodColor.color(for: entry.mood ?? 2)
         default:
             // A note is neutral — tint by its mood if one was set, else gray.
             if let m = entry.mood { return MoodColor.color(for: m) }

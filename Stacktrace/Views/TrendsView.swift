@@ -31,6 +31,25 @@ struct TrendsView: View {
         }
     }
 
+    /// Average day score over the visible range, if any days are rated.
+    private var scoreAvg: Double? {
+        let s = points.compactMap { $0.score }
+        guard !s.isEmpty else { return nil }
+        return Double(s.reduce(0, +)) / Double(s.count)
+    }
+
+    /// Average mood over the visible range, if any days have a mood.
+    private var moodAvg: Double? {
+        let m = points.compactMap { $0.mood }
+        guard !m.isEmpty else { return nil }
+        return m.reduce(0, +) / Double(m.count)
+    }
+
+    private func avgUnit(_ value: Double?, of total: Int) -> String {
+        guard let value else { return "/ \(total)" }
+        return "avg \(String(format: "%.1f", value)) / \(total)"
+    }
+
     var body: some View {
         if !pro.isPro {
             ProLockedView(feature: "Trends")
@@ -48,7 +67,7 @@ struct TrendsView: View {
                         description: Text("Log entries, ratings, and exercise to see trends here."))
                         .frame(maxWidth: .infinity, minHeight: 300)
                 } else {
-                    chartCard("Overall day score", unit: "/ 10") {
+                    chartCard("Overall day score", unit: avgUnit(scoreAvg, of: 10)) {
                         Chart(points.filter { $0.score != nil }) { p in
                             LineMark(x: .value("Day", p.date),
                                      y: .value("Score", p.score ?? 0))
@@ -61,7 +80,7 @@ struct TrendsView: View {
                         .chartYScale(domain: 0...10)
                     }
 
-                    chartCard("Average mood", unit: "/ 5") {
+                    chartCard("Average mood", unit: avgUnit(moodAvg, of: 5)) {
                         Chart(points.filter { $0.mood != nil }) { p in
                             LineMark(x: .value("Day", p.date),
                                      y: .value("Mood", p.mood ?? 0))

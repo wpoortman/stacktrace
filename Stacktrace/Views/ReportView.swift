@@ -1,13 +1,15 @@
 import SwiftUI
 import AppKit
 
-/// Sheet to choose a date range and export a PDF report.
-/// Defaults to the calendar week of the day the sheet was opened from.
+/// Two-step wizard to build and export a report.
+/// Step 1: choose what's in it and optionally add an AI TL;DR summary.
+/// Step 2: name the file and export (PDF) or copy as Markdown.
 struct ReportView: View {
     @EnvironmentObject private var store: DataStore
     @EnvironmentObject private var pro: ProManager
     @Environment(\.dismiss) private var dismiss
 
+    @State private var step = 0
     @State private var startDate: Date
     @State private var endDate: Date
     @State private var isGenerating = false
@@ -17,6 +19,12 @@ struct ReportView: View {
     @State private var note: String?
     @State private var selectedProject: UUID?
     @State private var selectedCharts: Set<TrendChart> = Set(TrendChart.allCases)
+
+    // AI TL;DR
+    @State private var summary = ""
+    @State private var includeSummary = false
+    @State private var summarizing = false
+    @State private var summaryError: String?
 
     /// Called after a successful export so the host can reveal the Exports list.
     var onExported: () -> Void = {}
@@ -31,92 +39,178 @@ struct ReportView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Text("Generate Report")
-                .font(.title2.bold())
-
-            HStack(spacing: 20) {
-                DatePicker("From", selection: $startDate, displayedComponents: .date)
-                DatePicker("To", selection: $endDate, displayedComponents: .date)
-            }
-            .datePickerStyle(.field)
-
-            HStack(spacing: 8) {
-                presetButton("This week", .weekOfYear, offset: 0)
-                presetButton("Last week", .weekOfYear, offset: -1)
-                presetButton("This month", .month, offset: 0)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Generate Report").font(.title2.bold())
+                Spacer()
+                Text("Step \(step + 1) of 2")
+                    .font(.caption).foregroundStyle(.secondary)
             }
 
-            if !store.projects.isEmpty {
-                Picker("Project", selection: $selectedProject) {
-                    Text("All entries").tag(UUID?.none)
-                    ForEach(store.projects) { p in Text(p.name).tag(UUID?.some(p.id)) }
+            Divider()
+
+            if step == 0 { stepContent } else { stepExport }
+
+            if let errorMessage {
+                Text(errorMessage).font(.callout).foregroundStyle(.red)
+            }
+
+            Spacer(minLength: 0)
+            footer
+        }
+        .padding(24)
+        .frame(width: 500, height: 560)
+    }
+
+    // MARK: Step 1 — content + summary
+
+    private var stepContent: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 20) {
+                    DatePicker("From", selection: $startDate, displayedComponents: .date)
+                    DatePicker("To", selection: $endDate, displayedComponents: .date)
                 }
-            }
+                .datePickerStyle(.field)
 
-            if pro.isPro && selectedProject == nil {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Trend graphs to include")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    HStack(spacing: 16) {
-                        ForEach(TrendChart.allCases) { chart in
-                            Toggle(chart.label, isOn: Binding(
-                                get: { selectedCharts.contains(chart) },
-                                set: { on in
-                                    if on { selectedCharts.insert(chart) }
-                                    else { selectedCharts.remove(chart) }
-                                }
-                            ))
-                            .toggleStyle(.checkbox)
+                HStack(spacing: 8) {
+                    presetButton("This week", .weekOfYear, offset: 0)
+                    presetButton("Last week", .weekOfYear, offset: -1)
+                    presetButton("This month", .month, offset: 0)
+                }
+
+                if !store.projects.isEmpty {
+                    Picker("Project", selection: $selectedProject) {
+                        Text("All entries").tag(UUID?.none)
+                        ForEach(store.projects) { p in Text(p.name).tag(UUID?.some(p.id)) }
+                    }
+                }
+
+                if pro.isPro && selectedProject == nil {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Trend graphs to include")
+                            .font(.caption).foregroundStyle(.secondary)
+                        HStack(spacing: 16) {
+                            ForEach(TrendChart.allCases) { chart in
+                                Toggle(chart.label, isOn: Binding(
+                                    get: { selectedCharts.contains(chart) },
+                                    set: { on in
+                                        if on { selectedCharts.insert(chart) }
+                                        else { selectedCharts.remove(chart) }
+                                    }
+                                ))
+                                .toggleStyle(.checkbox)
+                            }
                         }
                     }
                 }
-            }
 
+                ReportPreviewCount(start: startDate, end: endDate, projectID: selectedProject)
+
+                Divider()
+                summarySection
+            }
+            .padding(.trailing, 4)
+        }
+    }
+
+    private var summarySection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Summary (TL;DR)").font(.headline)
+            Text("Ask AI to summarize this report into one readable paragraph, added to the top of the export.")
+                .font(.caption).foregroundStyle(.secondary)
+
+            if AIConfig.apiKey?.isEmpty == false {
+                HStack {
+                    Button {
+                        summarizeAI()
+                    } label: {
+                        if summarizing { ProgressView().controlSize(.small) }
+                        else { Label(summary.isEmpty ? "Summarize with AI" : "Regenerate",
+                                     systemImage: "sparkles") }
+                    }
+                    .disabled(summarizing || endDate < startDate)
+                    if !summary.isEmpty {
+                        Toggle("Add to export", isOn: $includeSummary)
+                            .toggleStyle(.checkbox)
+                    }
+                }
+
+                if let summaryError {
+                    Text(summaryError).font(.caption).foregroundStyle(.red)
+                }
+
+                if !summary.isEmpty {
+                    ZStack(alignment: .topLeading) {
+                        if summary.isEmpty {
+                            Text("Summary…").foregroundStyle(.tertiary)
+                                .padding(.top, 8).padding(.leading, 7)
+                        }
+                        SpellCheckTextEditor(text: $summary)
+                            .padding(4)
+                    }
+                    .frame(height: 96)
+                    .background(Color(nsColor: .textBackgroundColor),
+                                in: RoundedRectangle(cornerRadius: 6))
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color(nsColor: .separatorColor)))
+                }
+            } else {
+                Text("Add an OpenAI key in Settings → AI to enable summaries.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    // MARK: Step 2 — name + export
+
+    private var stepExport: some View {
+        VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
+                Text("File name").font(.headline)
                 TextField(defaultBaseName(), text: $customName)
                     .textFieldStyle(.roundedBorder)
-                Text("File name — leave blank to use the default shown.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Text("Leave blank to use the default shown.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
 
             ReportPreviewCount(start: startDate, end: endDate, projectID: selectedProject)
 
-            if let errorMessage {
-                Text(errorMessage)
-                    .font(.callout)
-                    .foregroundStyle(.red)
+            if includeSummary && !summary.isEmpty {
+                Label("Includes an AI summary at the top.", systemImage: "sparkles")
+                    .font(.callout).foregroundStyle(.secondary)
             }
+
             if let note {
-                Text(note)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                Text(note).font(.callout).foregroundStyle(.secondary)
             }
+        }
+    }
 
+    // MARK: Footer nav
+
+    private var footer: some View {
+        HStack {
+            Button("Cancel", role: .cancel) { dismiss() }
             Spacer()
-
-            HStack {
-                Button("Cancel", role: .cancel) { dismiss() }
-                Spacer()
+            if step == 0 {
+                Button("Next") { step = 1 }
+                    .keyboardShortcut(.defaultAction)
+                    .buttonStyle(.borderedProminent)
+                    .disabled(endDate < startDate)
+            } else {
+                Button("Back") { step = 0 }
                 Button("Copy as Markdown", action: copyMarkdown)
                 Button {
                     export()
                 } label: {
-                    if isGenerating {
-                        ProgressView().controlSize(.small)
-                    } else {
-                        Text("Export PDF…")
-                    }
+                    if isGenerating { ProgressView().controlSize(.small) }
+                    else { Text("Export PDF…") }
                 }
                 .keyboardShortcut(.defaultAction)
                 .buttonStyle(.borderedProminent)
                 .disabled(isGenerating || endDate < startDate)
             }
         }
-        .padding(24)
-        .frame(width: 480, height: 460)
     }
 
     private func presetButton(_ title: String, _ unit: Calendar.Component, offset: Int) -> some View {
@@ -160,6 +254,25 @@ struct ReportView: View {
                           holidays: store.holidays, projectNames: names)
     }
 
+    private func summarizeAI() {
+        summaryError = nil
+        summarizing = true
+        let d = reportData()
+        let md = ReportMarkdownBuilder.markdown(entries: d.entries, routines: d.routines,
+                                                routineLogs: d.logs, dayRatings: d.ratings,
+                                                holidays: d.holidays, projectNames: d.projectNames,
+                                                from: startDate, to: endDate)
+        Task {
+            do {
+                summary = try await EnhancementService.summarize(md)
+                includeSummary = !summary.isEmpty
+            } catch {
+                summaryError = error.localizedDescription
+            }
+            summarizing = false
+        }
+    }
+
     private func export() {
         errorMessage = nil
         let d = reportData()
@@ -172,6 +285,7 @@ struct ReportView: View {
                                           routineLogs: d.logs, dayRatings: d.ratings,
                                           holidays: d.holidays, projectNames: d.projectNames,
                                           charts: charts,
+                                          summary: includeSummary ? summary : "",
                                           from: startDate, to: endDate)
         let gen = PDFReportGenerator()
         generator = gen
@@ -190,10 +304,13 @@ struct ReportView: View {
 
     private func copyMarkdown() {
         let d = reportData()
-        let md = ReportMarkdownBuilder.markdown(entries: d.entries, routines: d.routines,
+        var md = ReportMarkdownBuilder.markdown(entries: d.entries, routines: d.routines,
                                                 routineLogs: d.logs, dayRatings: d.ratings,
                                                 holidays: d.holidays, projectNames: d.projectNames,
                                                 from: startDate, to: endDate)
+        if includeSummary, !summary.isEmpty {
+            md = "**TL;DR:** \(summary)\n\n" + md
+        }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(md, forType: .string)
         errorMessage = nil

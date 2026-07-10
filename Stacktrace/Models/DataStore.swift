@@ -356,8 +356,8 @@ final class DataStore: ObservableObject {
         e.quickKind = kind
         e.detail = trimmed
         switch kind {
-        case "win": e.mood = 5
-        case "fail": e.mood = 2
+        case "win": e.mood = mood ?? 5
+        case "fail": e.mood = mood ?? 2
         default:
             e.mood = mood   // "note" — neutral; only what the user chose
             e.icon = icon
@@ -374,12 +374,14 @@ final class DataStore: ObservableObject {
     }
 
     /// Log an exercise activity (name + minutes).
-    func addExercise(_ name: String, minutes: Int, on day: Date = Date(), projectID: UUID? = nil) {
+    func addExercise(_ name: String, minutes: Int, mood: Int? = nil,
+                     on day: Date = Date(), projectID: UUID? = nil) {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
         var e = ReportEntry(date: day)
         e.exercise = trimmed
         e.durationMinutes = max(1, minutes)
+        e.mood = mood
         e.projectID = projectID
         upsert(e)
     }
