@@ -1,7 +1,7 @@
 import Foundation
 import Security
 
-/// Minimal Keychain wrapper for storing secrets (the OpenAI API key) outside
+/// Minimal Keychain wrapper for storing secrets (AI provider API keys) outside
 /// of plaintext defaults.
 enum Keychain {
     private static let service = "io.github.wpoortman.stacktrace"

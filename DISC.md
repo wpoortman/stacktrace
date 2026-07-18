@@ -12,7 +12,7 @@ and your general wellbeing — then turn that into clean reports for managers.
 
 Local-first and private: all data lives in a JSON file on the user's Mac.
 Nothing leaves the machine except features the user explicitly opts into
-(optional OpenAI text cleanup; optional team sync).
+(optional AI-provider text cleanup; optional team sync).
 
 Public repo: https://github.com/wpoortman/stacktrace (MIT). Default branch
 `main`.

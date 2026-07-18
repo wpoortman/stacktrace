@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 
 /// Two-step wizard to build and export a report.
-/// Step 1: choose what's in it and optionally add an AI TL;DR summary.
+/// Step 1: choose what's in it and optionally add a TL;DR summary.
 /// Step 2: name the file and export (PDF) or copy as Markdown.
 struct ReportView: View {
     @EnvironmentObject private var store: DataStore
@@ -20,10 +20,11 @@ struct ReportView: View {
     @State private var selectedProject: UUID?
     @State private var selectedCharts: Set<TrendChart> = Set(TrendChart.allCases)
 
-    // AI TL;DR
-    @State private var summary = ""
-    @State private var includeSummary = false
+    // Summary prompt + generated TL;DR
+    @State private var summaryPrompt = ""
+    @State private var generatedSummary = ""
     @State private var summarizing = false
+    @State private var enhancingSummary = false
     @State private var summaryError: String?
 
     /// Called after a successful export so the host can reveal the Exports list.
@@ -79,6 +80,10 @@ struct ReportView: View {
                     presetButton("This month", .month, offset: 0)
                 }
 
+                summarySection
+
+                Divider()
+
                 if !store.projects.isEmpty {
                     Picker("Project", selection: $selectedProject) {
                         Text("All entries").tag(UUID?.none)
@@ -106,9 +111,6 @@ struct ReportView: View {
                 }
 
                 ReportPreviewCount(start: startDate, end: endDate, projectID: selectedProject)
-
-                Divider()
-                summarySection
             }
             .padding(.trailing, 4)
         }
@@ -116,46 +118,63 @@ struct ReportView: View {
 
     private var summarySection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Summary (TL;DR)").font(.headline)
-            Text("Ask AI to summarize this report into one readable paragraph, added to the top of the export.")
+            Text("Summary guidance").font(.headline)
+            Text("Write how you look back on this period. This is used as extra AI context and is not exported directly.")
                 .font(.caption).foregroundStyle(.secondary)
 
-            if AIConfig.apiKey?.isEmpty == false {
+            ZStack(alignment: .topLeading) {
+                if summaryPrompt.isEmpty {
+                    Text("What stands out from this period?")
+                        .foregroundStyle(.tertiary)
+                        .padding(.top, 8)
+                        .padding(.leading, 7)
+                }
+                SpellCheckTextEditor(text: $summaryPrompt)
+                    .padding(4)
+            }
+            .frame(height: 112)
+            .background(Color(nsColor: .textBackgroundColor),
+                        in: RoundedRectangle(cornerRadius: 6))
+            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color(nsColor: .separatorColor)))
+
+            if AIConfig.hasAPIKey {
                 HStack {
                     Button {
                         summarizeAI()
                     } label: {
                         if summarizing { ProgressView().controlSize(.small) }
-                        else { Label(summary.isEmpty ? "Summarize with AI" : "Regenerate",
+                        else { Label(generatedSummary.isEmpty ? "Generate summary with AI" : "Regenerate with AI",
                                      systemImage: "sparkles") }
                     }
-                    .disabled(summarizing || endDate < startDate)
-                    if !summary.isEmpty {
-                        Toggle("Add to export", isOn: $includeSummary)
-                            .toggleStyle(.checkbox)
+                    .disabled(summarizing || enhancingSummary || endDate < startDate)
+                    Button {
+                        enhanceSummaryAI()
+                    } label: {
+                        if enhancingSummary { ProgressView().controlSize(.small) }
+                        else { Label("Enhance guidance with AI", systemImage: "wand.and.stars") }
                     }
+                    .disabled(summarizing || enhancingSummary || summaryPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
 
                 if let summaryError {
                     Text(summaryError).font(.caption).foregroundStyle(.red)
                 }
 
-                if !summary.isEmpty {
-                    ZStack(alignment: .topLeading) {
-                        if summary.isEmpty {
-                            Text("Summary…").foregroundStyle(.tertiary)
-                                .padding(.top, 8).padding(.leading, 7)
-                        }
-                        SpellCheckTextEditor(text: $summary)
+                if !generatedSummary.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Generated export summary")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        SpellCheckTextEditor(text: $generatedSummary)
                             .padding(4)
+                            .frame(height: 86)
+                            .background(Color(nsColor: .textBackgroundColor),
+                                        in: RoundedRectangle(cornerRadius: 6))
+                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color(nsColor: .separatorColor)))
                     }
-                    .frame(height: 96)
-                    .background(Color(nsColor: .textBackgroundColor),
-                                in: RoundedRectangle(cornerRadius: 6))
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color(nsColor: .separatorColor)))
                 }
             } else {
-                Text("Add an OpenAI key in Settings → AI to enable summaries.")
+                Text("Add an AI provider key in Settings → AI to generate or enhance summaries.")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
@@ -175,8 +194,8 @@ struct ReportView: View {
 
             ReportPreviewCount(start: startDate, end: endDate, projectID: selectedProject)
 
-            if includeSummary && !summary.isEmpty {
-                Label("Includes an AI summary at the top.", systemImage: "sparkles")
+            if !generatedSummary.isEmpty {
+                Label("Includes the generated summary at the top.", systemImage: "text.alignleft")
                     .font(.callout).foregroundStyle(.secondary)
             }
 
@@ -262,14 +281,30 @@ struct ReportView: View {
                                                 routineLogs: d.logs, dayRatings: d.ratings,
                                                 holidays: d.holidays, projectNames: d.projectNames,
                                                 from: startDate, to: endDate)
+        let userPerspective = summaryPrompt
+        let itemCount = d.entries.count
         Task {
             do {
-                summary = try await EnhancementService.summarize(md)
-                includeSummary = !summary.isEmpty
+                generatedSummary = try await EnhancementService.summarize(md, userPerspective: userPerspective,
+                                                                          itemCount: itemCount)
             } catch {
                 summaryError = error.localizedDescription
             }
             summarizing = false
+        }
+    }
+
+    private func enhanceSummaryAI() {
+        summaryError = nil
+        enhancingSummary = true
+        let snapshot = summaryPrompt
+        Task {
+            do {
+                summaryPrompt = try await EnhancementService.enhanceSummary(snapshot)
+            } catch {
+                summaryError = error.localizedDescription
+            }
+            enhancingSummary = false
         }
     }
 
@@ -285,7 +320,7 @@ struct ReportView: View {
                                           routineLogs: d.logs, dayRatings: d.ratings,
                                           holidays: d.holidays, projectNames: d.projectNames,
                                           charts: charts,
-                                          summary: includeSummary ? summary : "",
+                                          summary: generatedSummary,
                                           from: startDate, to: endDate)
         let gen = PDFReportGenerator()
         generator = gen
@@ -308,8 +343,8 @@ struct ReportView: View {
                                                 routineLogs: d.logs, dayRatings: d.ratings,
                                                 holidays: d.holidays, projectNames: d.projectNames,
                                                 from: startDate, to: endDate)
-        if includeSummary, !summary.isEmpty {
-            md = "**TL;DR:** \(summary)\n\n" + md
+        if !generatedSummary.isEmpty {
+            md = "**TL;DR:** \(generatedSummary)\n\n" + md
         }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(md, forType: .string)

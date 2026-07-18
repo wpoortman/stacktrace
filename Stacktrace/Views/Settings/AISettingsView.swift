@@ -1,38 +1,86 @@
 import SwiftUI
 
-/// OpenAI configuration: API key (stored in Keychain) and model. Includes a
-/// Verify button that makes a tiny request to confirm the key works.
+/// AI configuration: provider, API key (stored in Keychain), model, and style
+/// instructions. Includes a Verify button that makes a tiny request.
 struct AISettingsView: View {
     @State private var apiKey: String = ""
+    @State private var keyStored = false
+    @AppStorage(AIConfig.providerDefaultsKey) private var provider: String = AIProvider.openAI.rawValue
     @AppStorage(AIConfig.modelDefaultsKey) private var model: String = AIConfig.defaultModel
     @AppStorage(AIConfig.instructionsKey) private var instructions: String = ""
 
     @State private var status: Status = .idle
     enum Status: Equatable { case idle, verifying, ok, failed(String) }
 
+    private var selectedProvider: AIProvider {
+        AIProvider(rawValue: provider) ?? .openAI
+    }
+
+    private var modelOptions: [AIModelOption] {
+        AIModelCatalog.options(for: selectedProvider)
+    }
+
+    private var selectedModel: AIModelOption {
+        AIModelCatalog.option(provider: selectedProvider, model: model)
+            ?? modelOptions[0]
+    }
+
     var body: some View {
         Form {
             Section {
-                SecureField("sk-…", text: $apiKey)
-                Button("Save Key") { saveKey() }
-                    .disabled(apiKey.trimmingCharacters(in: .whitespaces).isEmpty)
-                if Keychain.get(account: AIConfig.keychainAccount) != nil {
-                    Label("A key is stored in your Keychain", systemImage: "checkmark.seal")
-                        .font(.caption)
-                        .foregroundStyle(.green)
+                Picker("Provider", selection: $provider) {
+                    ForEach(AIProvider.allCases) { provider in
+                        Text(provider.displayName).tag(provider.rawValue)
+                    }
                 }
             } header: {
-                Text("OpenAI API Key")
+                Text("Provider")
             } footer: {
-                Text("Create a key at platform.openai.com → API keys. This is separate from a ChatGPT subscription and billed per use. Stored securely in the macOS Keychain.")
+                Text("Choose which AI service Stacktrace should use for summaries and text enhancement.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
-            Section("Model") {
-                TextField("Model", text: $model)
-                    .textFieldStyle(.roundedBorder)
-                Text("Default \(AIConfig.defaultModel) — cheap and good for text cleanup.")
+            Section {
+                SecureField(selectedProvider.keyPlaceholder, text: $apiKey)
+                HStack {
+                    Button("Save Key") { saveKey() }
+                        .disabled(apiKey.trimmingCharacters(in: .whitespaces).isEmpty)
+                    if keyStored {
+                        Button("Remove Key", role: .destructive) { removeKey() }
+                    }
+                }
+                if keyStored {
+                    Label("\(selectedProvider.displayName) key is stored in your Keychain",
+                          systemImage: "checkmark.seal")
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                }
+            } header: {
+                Text("\(selectedProvider.displayName) API Key")
+            } footer: {
+                Text("\(selectedProvider.keyHelp) Stored securely in the macOS Keychain.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                Picker("Model", selection: $model) {
+                    ForEach(modelOptions) { option in
+                        Text("\(option.name) - \(option.detail) · \(option.tokenWindow)")
+                            .tag(option.id)
+                    }
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(selectedModel.detail)
+                    Text("\(selectedModel.tokenWindow) context · \(selectedModel.tokenUse)")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            } header: {
+                Text("Model")
+            } footer: {
+                Text("Token window is the maximum context the model can consider. Token cost describes relative usage for the same report text.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -63,7 +111,7 @@ struct AISettingsView: View {
             Section {
                 HStack {
                     Button("Verify Key") { verify() }
-                        .disabled(status == .verifying)
+                        .disabled(status == .verifying || apiKey.trimmingCharacters(in: .whitespaces).isEmpty)
                     if status == .verifying {
                         ProgressView().controlSize(.small)
                     }
@@ -73,7 +121,13 @@ struct AISettingsView: View {
         }
         .formStyle(.grouped)
         .onAppear {
-            apiKey = Keychain.get(account: AIConfig.keychainAccount) ?? ""
+            normalizeModel()
+            loadKey()
+        }
+        .onChange(of: provider) { _ in
+            status = .idle
+            normalizeModel()
+            loadKey()
         }
     }
 
@@ -93,10 +147,18 @@ struct AISettingsView: View {
     private func saveKey() {
         let trimmed = apiKey.trimmingCharacters(in: .whitespaces)
         if trimmed.isEmpty {
-            Keychain.delete(account: AIConfig.keychainAccount)
+            removeKey()
         } else {
-            Keychain.set(trimmed, account: AIConfig.keychainAccount)
+            AIConfig.storeAPIKey(trimmed, for: selectedProvider)
+            keyStored = true
+            status = .idle
         }
+    }
+
+    private func removeKey() {
+        AIConfig.deleteAPIKey(for: selectedProvider)
+        apiKey = ""
+        keyStored = false
         status = .idle
     }
 
@@ -110,6 +172,17 @@ struct AISettingsView: View {
             } catch {
                 status = .failed(error.localizedDescription)
             }
+        }
+    }
+
+    private func loadKey() {
+        apiKey = AIConfig.apiKey(for: selectedProvider) ?? ""
+        keyStored = AIConfig.hasAPIKey(for: selectedProvider)
+    }
+
+    private func normalizeModel() {
+        if AIModelCatalog.option(provider: selectedProvider, model: model) == nil {
+            model = AIModelCatalog.defaultModel(for: selectedProvider)
         }
     }
 }

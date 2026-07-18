@@ -421,7 +421,9 @@ final class DataStore: ObservableObject {
 
     private static let backupSettingsKeys = [
         "reminderEnabled", "reminderHour", "reminderMinute", "endOfDayHour",
-        "calendarEnabled", "selectedWeekdays", "openAIModel", "lastCelebratedStreak",
+        "calendarEnabled", "selectedWeekdays", "aiProvider", "openAIModel",
+        "openAIKeyPresent", "anthropicAIKeyPresent", "googleAIKeyPresent",
+        "lastCelebratedStreak",
     ]
 
     private func encodedStoreData() -> Data {

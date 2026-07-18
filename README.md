@@ -18,7 +18,7 @@ your entries into a manager-ready report.
 - **Dashboard** — current streak, weekly/total stats, average mood, and a GitHub-style contribution graph coloured by how each day went (orange → green) with streak milestones.
 - **Tags** — reusable tag catalogue; search entries by title or tag.
 - **PDF export** — grouped-by-day report for any date range, with an optional custom file name. All exports live in one place inside the app.
-- **AI polish (optional)** — clean up an entry's wording with your own OpenAI API key.
+- **AI polish (optional)** — clean up an entry's wording with your own AI provider key.
 - **Daily reminder (optional)** — a local notification nudging you to log your day.
 - **Local-first** — everything is stored in a plain JSON file on your Mac. Nothing leaves your machine (except AI requests, if you enable them).
 
@@ -65,7 +65,7 @@ Drag it into `/Applications` to keep it.
 
 ## Optional setup
 
-- **AI enhancement** — open **Settings** (⌘,) → **AI**, paste an OpenAI API key from [platform.openai.com](https://platform.openai.com/api-keys), and click *Verify*. This is separate from a ChatGPT subscription and billed per use (fractions of a cent per enhance).
+- **AI enhancement** — open **Settings** (⌘,) → **AI**, choose OpenAI, Anthropic, or Google Gemini, paste that provider's API key, pick an allowed model from the dropdown, and click *Verify*. API use is billed by the provider you choose.
 - **Daily reminder** — **Settings** → **Reminders**: enable and pick a time. macOS will ask for notification permission.
 - **Visible weekdays** — **Settings** → **Days**: choose which weekdays show in the sidebar.
 

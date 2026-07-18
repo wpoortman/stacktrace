@@ -72,7 +72,7 @@ struct GeneralSettingsView: View {
             } header: {
                 Text("Backup")
             } footer: {
-                Text("Back up everything — entries, routines, ratings, settings, and exported PDFs — into one file. Restore it on another Mac to pick up where you left off. (Your OpenAI key stays in the Keychain and isn't included; re-enter it after restoring.)")
+                Text("Back up everything — entries, routines, ratings, settings, and exported PDFs — into one file. Restore it on another Mac to pick up where you left off. (Your AI provider keys stay in the Keychain and aren't included; re-enter them after restoring.)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

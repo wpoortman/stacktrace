@@ -34,6 +34,28 @@ final class BuilderTests: XCTestCase {
         let html = ReportHTMLBuilder.html(entries: [], from: Date(), to: Date())
         XCTAssertTrue(html.contains("No entries"))
     }
+
+    func testZipSelectedExports() throws {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let first = dir.appendingPathComponent("First.pdf")
+        let second = dir.appendingPathComponent("Second.pdf")
+        try Data("one".utf8).write(to: first)
+        try Data("two".utf8).write(to: second)
+
+        let destination = dir.appendingPathComponent("Selected.zip")
+        try ExportStore.zip(urls: [first, second], to: destination)
+
+        let zip = try Data(contentsOf: destination)
+        XCTAssertTrue(zip.starts(with: Data([0x50, 0x4b, 0x03, 0x04])))
+        XCTAssertTrue(zip.contains(Data([0x50, 0x4b, 0x01, 0x02])))
+        let zipText = String(decoding: zip, as: UTF8.self)
+        XCTAssertTrue(zipText.contains("First.pdf"))
+        XCTAssertTrue(zipText.contains("Second.pdf"))
+    }
 }
 
 final class AutoExportTests: XCTestCase {

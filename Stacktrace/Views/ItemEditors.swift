@@ -277,7 +277,7 @@ struct EnhanceButton: View {
     let action: () -> Void
 
     var body: some View {
-        if AIConfig.apiKey?.isEmpty == false {
+        if AIConfig.hasAPIKey {
             VStack(alignment: .leading, spacing: 4) {
                 Button(action: action) {
                     if enhancing {
