@@ -423,6 +423,7 @@ final class DataStore: ObservableObject {
         "reminderEnabled", "reminderHour", "reminderMinute", "endOfDayHour",
         "calendarEnabled", "selectedWeekdays", "aiProvider", "openAIModel",
         "openAIKeyPresent", "anthropicAIKeyPresent", "googleAIKeyPresent",
+        "aiCustomInstructions", "aiPeriodSummaryPrompt",
         "lastCelebratedStreak",
     ]
 

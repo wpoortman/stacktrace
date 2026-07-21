@@ -8,6 +8,7 @@ struct AISettingsView: View {
     @AppStorage(AIConfig.providerDefaultsKey) private var provider: String = AIProvider.openAI.rawValue
     @AppStorage(AIConfig.modelDefaultsKey) private var model: String = AIConfig.defaultModel
     @AppStorage(AIConfig.instructionsKey) private var instructions: String = ""
+    @AppStorage(AIConfig.periodSummaryPromptKey) private var periodSummaryPrompt = AIConfig.defaultPeriodSummaryPrompt
 
     @State private var status: Status = .idle
     enum Status: Equatable { case idle, verifying, ok, failed(String) }
@@ -104,6 +105,29 @@ struct AISettingsView: View {
                 Text("Style instructions")
             } footer: {
                 Text("Optional. Added to every Enhance request to steer tone of voice and style — e.g. “Keep it concise and upbeat, in British English.” The AI still won't invent facts or change your meaning.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                SpellCheckTextEditor(text: $periodSummaryPrompt)
+                    .padding(4)
+                    .frame(height: 170)
+                    .background(Color(nsColor: .textBackgroundColor),
+                                in: RoundedRectangle(cornerRadius: 6))
+                    .overlay(RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color(nsColor: .separatorColor)))
+                HStack {
+                    Spacer()
+                    Button("Restore Default") {
+                        periodSummaryPrompt = AIConfig.defaultPeriodSummaryPrompt
+                    }
+                    .disabled(periodSummaryPrompt == AIConfig.defaultPeriodSummaryPrompt)
+                }
+            } header: {
+                Text("Standalone summary prompt")
+            } footer: {
+                Text("System instructions used by Generate → Summary. Stacktrace supplies the selected period and its logged items separately. If left empty, the default prompt is used.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

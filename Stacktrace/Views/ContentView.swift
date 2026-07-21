@@ -4,10 +4,15 @@ enum MainPanel {
     case dashboard, activity, meetings, trends, day, exports
 }
 
+private enum GenerateOption: String, Identifiable {
+    case report, summary
+    var id: String { rawValue }
+}
+
 struct ContentView: View {
     @EnvironmentObject private var store: DataStore
     @State private var selectedDate: Date = Calendar.current.startOfDay(for: Date())
-    @State private var showingReport = false
+    @State private var generateOption: GenerateOption?
     @State private var showCalendar = false
     @State private var panel: MainPanel = .dashboard
     @State private var searchText = ""
@@ -85,9 +90,16 @@ struct ContentView: View {
         }
         .searchable(text: $searchText, placement: .sidebar,
                     prompt: "Search title or tag")
-        .sheet(isPresented: $showingReport) {
-            ReportView(initialDate: selectedDate) {
-                panel = .exports
+        .sheet(item: $generateOption) { option in
+            switch option {
+            case .report:
+                ReportView(initialDate: selectedDate) {
+                    panel = .exports
+                }
+            case .summary:
+                SummaryView(initialDate: selectedDate) {
+                    panel = .exports
+                }
             }
         }
     }
@@ -193,10 +205,19 @@ struct ContentView: View {
 
             Spacer()
 
-            Button {
-                showingReport = true
+            Menu {
+                Button {
+                    generateOption = .report
+                } label: {
+                    Label("Report…", systemImage: "doc.richtext")
+                }
+                Button {
+                    generateOption = .summary
+                } label: {
+                    Label("Summary…", systemImage: "text.document")
+                }
             } label: {
-                Label("Generate Report…", systemImage: "doc.richtext")
+                Label("Generate", systemImage: "sparkles")
                     .frame(maxWidth: .infinity)
             }
             .controlSize(.large)

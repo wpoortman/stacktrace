@@ -292,6 +292,51 @@ enum ReportHTMLBuilder {
     """
 }
 
+/// Builds the compact standalone document produced by Generate → Summary.
+/// The AI output is always escaped before rendering and its line breaks are
+/// preserved, so an editable summary cannot inject HTML into the PDF.
+enum SummaryHTMLBuilder {
+    static func html(summary: String, itemCount: Int,
+                     from start: Date, to end: Date) -> String {
+        let range = "\(DateFormat.short.string(from: start)) – \(DateFormat.short.string(from: end))"
+        let countLabel = "\(itemCount) source \(itemCount == 1 ? "item" : "items")"
+        let content = summary.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+        <meta charset="utf-8">
+        <style>
+        * { box-sizing: border-box; }
+        body {
+          font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+          color: #1d1d1f;
+          font-size: 12.5px;
+          line-height: 1.6;
+          margin: 0;
+          padding: 42px 48px;
+        }
+        header { border-bottom: 2px solid #1d1d1f; padding-bottom: 12px; margin-bottom: 24px; }
+        h1 { font-size: 23px; margin: 0 0 5px; }
+        .period { font-size: 13px; font-weight: 600; margin: 0; }
+        .meta { color: #6e6e73; margin: 2px 0 0; }
+        .summary-content { white-space: pre-wrap; margin: 0; }
+        </style>
+        </head>
+        <body>
+        <header>
+          <h1>Work Summary</h1>
+          <p class="period">\(range.htmlEscaped)</p>
+          <p class="meta">\(countLabel.htmlEscaped)</p>
+        </header>
+        <div class="summary-content">\(content.htmlEscaped)</div>
+        </body>
+        </html>
+        """
+    }
+}
+
 private extension String {
     var htmlEscaped: String {
         replacingOccurrences(of: "&", with: "&amp;")

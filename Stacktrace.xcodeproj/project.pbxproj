@@ -43,6 +43,7 @@
 		8470B63DA9AC22376CAE1AEF /* PDFReportGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B234934E78F46837198D113 /* PDFReportGenerator.swift */; };
 		8B930E1DE986CDB3A38A89A0 /* MoodKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF02BA1BC8B172FA05892DBA /* MoodKit.swift */; };
 		8C6E0EDAA4F9E2A7C8A94E1C /* ReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 294AAFB100356C4DCBEE1098 /* ReportView.swift */; };
+		8F2E471C3EDFFE01FE06213C /* SummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1E8CF132602CC73D7DB614 /* SummaryView.swift */; };
 		920BCB50031666E35D299D0E /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D927D34F368390111667CB32 /* DashboardView.swift */; };
 		93C58DA7A2550F51081B2274 /* LicenseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E9D0E14EAB396C1A2175FA7 /* LicenseTests.swift */; };
 		963009917E8D2BFFEA08B464 /* CalendarSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F3A769C19EDE4383933046D /* CalendarSettingsView.swift */; };
@@ -136,6 +137,7 @@
 		A765B6334F793F14DF8EA36B /* TrendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendsView.swift; sourceTree = "<group>"; };
 		AA6439C8B02955BE79EE6BD4 /* ReportExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportExporter.swift; sourceTree = "<group>"; };
 		AABFA4F98D14DD23B7CF386D /* ExportStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportStore.swift; sourceTree = "<group>"; };
+		AF1E8CF132602CC73D7DB614 /* SummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryView.swift; sourceTree = "<group>"; };
 		B25193A829F26C8C91C5A3DF /* TeamTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamTests.swift; sourceTree = "<group>"; };
 		B30D9AFA51E45D5E95E84A94 /* ReportHTMLBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportHTMLBuilder.swift; sourceTree = "<group>"; };
 		B5D07C90E2DFBBCFD5D7E9AE /* ConfettiView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfettiView.swift; sourceTree = "<group>"; };
@@ -201,6 +203,7 @@
 				294AAFB100356C4DCBEE1098 /* ReportView.swift */,
 				341DA48932786654057BF282 /* SearchView.swift */,
 				F341677A5EA6284F0E9005B9 /* SpellCheckTextEditor.swift */,
+				AF1E8CF132602CC73D7DB614 /* SummaryView.swift */,
 				3DBCD4E57376D2917FCC3F0B /* TagChip.swift */,
 				A765B6334F793F14DF8EA36B /* TrendsView.swift */,
 				A1C7477DD5D17D978B2DEEE6 /* Settings */,
@@ -447,6 +450,7 @@
 				640AD62E555648E6AD3055B2 /* StacktraceApp.swift in Sources */,
 				161F015CC822D5FB784848E8 /* StorageLocation.swift in Sources */,
 				0A46A500B71C0F661BB10AB6 /* StorageSettingsView.swift in Sources */,
+				8F2E471C3EDFFE01FE06213C /* SummaryView.swift in Sources */,
 				2F9FDE02CB0B226755E14713 /* TagChip.swift in Sources */,
 				7CF236BC15A8F6C07A0F8C90 /* TagsSettingsView.swift in Sources */,
 				E67294FFBDC70AA064073B16 /* TeamAPI.swift in Sources */,

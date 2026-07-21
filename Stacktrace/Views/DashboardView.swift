@@ -166,8 +166,13 @@ struct DashboardView: View {
 
     // MARK: Today card
 
-    @ViewBuilder
     private var todayCard: some View {
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            todayCard(at: context.date)
+        }
+    }
+
+    private func todayCard(at now: Date) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             if todayLogged {
                 Label("Today's logged", systemImage: "checkmark.circle.fill")
@@ -176,13 +181,19 @@ struct DashboardView: View {
                 Text("Add a quick win or setback, or write a full entry.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-            } else {
+            } else if DashboardPrompt.shouldAskHowDayWent(at: now) {
                 Text("How did today go?")
                     .font(.headline)
                 Text("One tap to start — you can add detail anytime.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 quickMoodRow
+            } else {
+                Text("Start logging today")
+                    .font(.headline)
+                Text("Capture a quick win, setback, or full entry anytime.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             QuickActions(day: today) {

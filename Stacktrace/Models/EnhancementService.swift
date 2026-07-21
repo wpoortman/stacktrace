@@ -93,7 +93,15 @@ enum AIConfig {
     static let providerDefaultsKey = "aiProvider"
     static let modelDefaultsKey = "openAIModel"
     static let instructionsKey = "aiCustomInstructions"
+    static let periodSummaryPromptKey = "aiPeriodSummaryPrompt"
     static let defaultModel = "gpt-4o-mini"
+    static let defaultPeriodSummaryPrompt = """
+    Write a thoughtful standalone work summary for the selected period using only the supplied Stacktrace items.
+
+    Write in the first person and make the result useful for reflecting on the period or sharing with a manager. Start with a concise overview, then cover the most meaningful accomplishments and progress, important challenges or lessons, and the next focus only when the source material supports one. Synthesize related items instead of listing every entry. Mention patterns in mood, day scores, meetings, or routines only when they are genuinely evident.
+
+    Use clear plain-text section headings and concise paragraphs; do not use Markdown formatting. Do not invent facts, outcomes, priorities, or future plans. Return only the finished summary, without a preamble or commentary about the task.
+    """
     private static var cachedAPIKeys: [AIProvider: String?] = [:]
     private static var loadedAPIKeys: Set<AIProvider> = []
 
@@ -168,6 +176,15 @@ enum AIConfig {
     static var customInstructions: String {
         (UserDefaults.standard.string(forKey: instructionsKey) ?? "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Complete system prompt used for standalone period summaries. An empty
+    /// setting deliberately falls back to the shipped prompt so generation is
+    /// never sent to a provider without meaningful instructions.
+    static var periodSummaryPrompt: String {
+        let stored = UserDefaults.standard.string(forKey: periodSummaryPromptKey) ?? ""
+        let trimmed = stored.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? defaultPeriodSummaryPrompt : trimmed
     }
 
     static var model: String {
@@ -312,6 +329,35 @@ enum EnhancementService {
             """
         }
 
+        return try await completion(system: system, user: userContent, temperature: 0.4)
+    }
+
+    /// Generate a standalone summary document for a selected period. Unlike
+    /// `summarize`, this is not a short TL;DR embedded in a full report: the
+    /// editable Settings prompt controls the complete shape of the output.
+    static func generatePeriodSummary(_ sourceText: String, period: String,
+                                      itemCount: Int) async throws -> String {
+        let trimmed = sourceText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "" }
+
+        var system = AIConfig.periodSummaryPrompt
+        let instructions = AIConfig.customInstructions
+        if !instructions.isEmpty {
+            system += """
+
+
+            Additional tone and style preferences from the user:
+            \(instructions)
+            """
+        }
+
+        let userContent = """
+        Selected period: \(period)
+        Total source items: \(itemCount)
+
+        Stacktrace source material:
+        \(trimmed)
+        """
         return try await completion(system: system, user: userContent, temperature: 0.4)
     }
 

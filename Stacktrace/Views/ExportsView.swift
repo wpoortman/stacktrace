@@ -17,7 +17,7 @@ struct ExportsView: View {
                 ContentUnavailableView {
                     Label("No exports yet", systemImage: "tray")
                 } description: {
-                    Text("Generate a report and it will appear here.")
+                    Text("Generate a report or summary and it will appear here.")
                 }
             } else {
                 List(selection: $selection) {

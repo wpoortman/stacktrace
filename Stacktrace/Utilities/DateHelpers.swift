@@ -23,3 +23,11 @@ enum DateFormat {
         return f
     }()
 }
+
+enum DashboardPrompt {
+    /// The dashboard's whole-day reflection belongs near the end of the workday,
+    /// not at a time when the user cannot know how the day went yet.
+    static func shouldAskHowDayWent(at date: Date = Date(), calendar: Calendar = .current) -> Bool {
+        (16..<18).contains(calendar.component(.hour, from: date))
+    }
+}

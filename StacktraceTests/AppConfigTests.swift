@@ -4,6 +4,7 @@ import XCTest
 final class AppConfigTests: XCTestCase {
     override func tearDown() {
         UserDefaults.standard.removeObject(forKey: AppConfig.devURLKey)
+        UserDefaults.standard.removeObject(forKey: AIConfig.periodSummaryPromptKey)
         super.tearDown()
     }
 
@@ -30,5 +31,17 @@ final class AppConfigTests: XCTestCase {
         XCTAssertEqual(AppConfig.adminURL.absoluteString, "http://127.0.0.1:8000/admin")
         XCTAssertEqual(AppConfig.pricingURL.absoluteString, "http://127.0.0.1:8000/pricing")
         #endif
+    }
+
+    func testPeriodSummaryPromptHasEditableDefault() {
+        UserDefaults.standard.removeObject(forKey: AIConfig.periodSummaryPromptKey)
+        XCTAssertEqual(AIConfig.periodSummaryPrompt, AIConfig.defaultPeriodSummaryPrompt)
+
+        UserDefaults.standard.set("Write this as a weekly retrospective.",
+                                  forKey: AIConfig.periodSummaryPromptKey)
+        XCTAssertEqual(AIConfig.periodSummaryPrompt, "Write this as a weekly retrospective.")
+
+        UserDefaults.standard.set("   \n", forKey: AIConfig.periodSummaryPromptKey)
+        XCTAssertEqual(AIConfig.periodSummaryPrompt, AIConfig.defaultPeriodSummaryPrompt)
     }
 }

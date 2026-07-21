@@ -35,6 +35,15 @@ final class BuilderTests: XCTestCase {
         XCTAssertTrue(html.contains("No entries"))
     }
 
+    func testStandaloneSummaryHTMLContainsMetadataAndEscapesContent() {
+        let html = SummaryHTMLBuilder.html(summary: "Highlights\nShipped <the feature>",
+                                           itemCount: 3, from: Date(), to: Date())
+        XCTAssertTrue(html.contains("Work Summary"))
+        XCTAssertTrue(html.contains("3 source items"))
+        XCTAssertTrue(html.contains("Highlights\nShipped &lt;the feature&gt;"))
+        XCTAssertFalse(html.contains("Shipped <the feature>"))
+    }
+
     func testZipSelectedExports() throws {
         let dir = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

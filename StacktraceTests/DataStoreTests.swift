@@ -80,6 +80,23 @@ final class DataStoreTests: XCTestCase {
         XCTAssertEqual(store.dayRating(for: Date()), 10)
     }
 
+    func testDashboardDayReflectionOnlyAppearsFromFourUntilSix() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+
+        func date(hour: Int, minute: Int = 0) -> Date {
+            calendar.date(from: DateComponents(year: 2026, month: 7, day: 21,
+                                               hour: hour, minute: minute))!
+        }
+
+        XCTAssertFalse(DashboardPrompt.shouldAskHowDayWent(at: date(hour: 15, minute: 59),
+                                                           calendar: calendar))
+        XCTAssertTrue(DashboardPrompt.shouldAskHowDayWent(at: date(hour: 16), calendar: calendar))
+        XCTAssertTrue(DashboardPrompt.shouldAskHowDayWent(at: date(hour: 17, minute: 59),
+                                                          calendar: calendar))
+        XCTAssertFalse(DashboardPrompt.shouldAskHowDayWent(at: date(hour: 18), calendar: calendar))
+    }
+
     func testHolidayDetection() {
         let store = makeStore()
         XCTAssertFalse(store.isOnHoliday())
