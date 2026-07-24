@@ -8,7 +8,7 @@ struct MeetingsReview: View {
     @EnvironmentObject private var store: DataStore
     @ObservedObject private var calendar = CalendarService.shared
     @AppStorage("calendarEnabled") private var enabled = false
-    @State private var reflecting: CalendarMeeting?
+    @State private var reviewAction: MeetingReviewAction?
 
     private var isPast: Bool { day <= Calendar.current.startOfDay(for: Date()) }
 
@@ -60,13 +60,20 @@ struct MeetingsReview: View {
                                 Image(systemName: "person.2.fill").foregroundStyle(group.color)
                                 Text(meeting.title).lineLimit(1)
                                 Spacer()
-                                Button("Didn't happen") {
-                                    store.addMeeting(eventID: meeting.id, title: meeting.title,
-                                                     happened: false, wentWell: "", wentBad: "",
-                                                     mood: nil, on: day)
+                                Button("Didn't attend…") {
+                                    reviewAction = MeetingReviewAction(
+                                        meeting: meeting, kind: .didNotAttend)
                                 }
                                 .buttonStyle(.borderless)
-                                Button("Log") { reflecting = meeting }
+                                Button("Didn't happen…") {
+                                    reviewAction = MeetingReviewAction(
+                                        meeting: meeting, kind: .didNotHappen)
+                                }
+                                .buttonStyle(.borderless)
+                                Button("Log") {
+                                    reviewAction = MeetingReviewAction(
+                                        meeting: meeting, kind: .reflection)
+                                }
                                     .buttonStyle(.bordered)
                             }
                         }
@@ -78,11 +85,27 @@ struct MeetingsReview: View {
             .background(Color(nsColor: .controlBackgroundColor),
                         in: RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.secondary.opacity(0.12)))
-            .sheet(item: $reflecting) { meeting in
-                MeetingReflectionSheet(day: day, meeting: meeting)
+            .sheet(item: $reviewAction) { action in
+                switch action.kind {
+                case .reflection:
+                    MeetingReflectionSheet(day: day, meeting: action.meeting)
+                case .didNotAttend:
+                    MeetingAbsenceSheet(day: day, meeting: action.meeting,
+                                        initialOutcome: .didNotAttend)
+                case .didNotHappen:
+                    MeetingAbsenceSheet(day: day, meeting: action.meeting,
+                                        initialOutcome: .didNotHappen)
+                }
             }
         }
     }
+}
+
+private struct MeetingReviewAction: Identifiable {
+    enum Kind: String { case reflection, didNotAttend, didNotHappen }
+    let meeting: CalendarMeeting
+    let kind: Kind
+    var id: String { "\(meeting.id)-\(kind.rawValue)" }
 }
 
 /// A day's pending meetings from one source calendar.
@@ -109,6 +132,8 @@ private struct MeetingReflectionSheet: View {
     @EnvironmentObject private var store: DataStore
     @Environment(\.dismiss) private var dismiss
 
+    @State private var outcome: MeetingOutcome = .attended
+    @State private var absenceReason = ""
     @State private var wentWell = ""
     @State private var wentBad = ""
     @State private var mood: Int?
@@ -120,6 +145,12 @@ private struct MeetingReflectionSheet: View {
           && wentBad.trimmingCharacters(in: .whitespaces).isEmpty)
     }
 
+    private var canEnhance: Bool {
+        outcome == .attended
+            ? hasNotes
+            : !absenceReason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
@@ -129,22 +160,41 @@ private struct MeetingReflectionSheet: View {
                     .background(.blue, in: RoundedRectangle(cornerRadius: 10))
                 VStack(alignment: .leading) {
                     Text(meeting.title).font(.headline).lineLimit(2)
-                    Text("Reflect on this meeting").font(.caption).foregroundStyle(.secondary)
+                    Text(outcome == .attended
+                         ? "Reflect on this meeting"
+                         : "Record why you weren't there")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
 
-            MoodPicker(mood: $mood)
-            field("What went well", text: $wentWell)
-            field("What didn't / to improve", text: $wentBad)
+            Picker("Outcome", selection: $outcome) {
+                ForEach(MeetingOutcome.allCases) { option in
+                    Text(option.label).tag(option)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            if outcome == .attended {
+                MoodPicker(mood: $mood)
+                field("What went well", text: $wentWell)
+                field("What didn't / to improve", text: $wentBad)
+            } else {
+                field(outcome == .didNotAttend
+                      ? "Why didn't you attend? (optional)"
+                      : "Why didn't it happen? (optional)",
+                      text: $absenceReason)
+            }
             EnhanceButton(enhancing: enhancing, error: enhanceError,
-                          canRun: hasNotes, action: enhance)
+                          canRun: canEnhance, action: enhance)
 
             HStack {
                 Spacer()
                 Button("Cancel", role: .cancel) { dismiss() }
                 Button("Save") {
                     store.addMeeting(eventID: meeting.id, title: meeting.title,
-                                     happened: true,
+                                     outcome: outcome,
+                                     absenceReason: absenceReason,
                                      wentWell: wentWell, wentBad: wentBad,
                                      mood: mood, on: day)
                     dismiss()
@@ -160,12 +210,18 @@ private struct MeetingReflectionSheet: View {
     private func enhance() {
         enhanceError = nil
         enhancing = true
-        let snapshot = EntryText(title: "", detail: "", wentWell: wentWell, wentBad: wentBad)
+        let snapshot = outcome == .attended
+            ? EntryText(title: "", detail: "", wentWell: wentWell, wentBad: wentBad)
+            : EntryText(title: "", detail: absenceReason, wentWell: "", wentBad: "")
         Task {
             do {
                 let result = try await EnhancementService.enhance(snapshot)
-                wentWell = result.wentWell
-                wentBad = result.wentBad
+                if outcome == .attended {
+                    wentWell = result.wentWell
+                    wentBad = result.wentBad
+                } else {
+                    absenceReason = result.detail
+                }
             } catch {
                 enhanceError = error.localizedDescription
             }
@@ -186,6 +242,101 @@ private struct MeetingReflectionSheet: View {
     }
 }
 
+/// Records that a calendar meeting was missed or cancelled, with an optional
+/// explanation that remains visible in the day log and generated reports.
+private struct MeetingAbsenceSheet: View {
+    let day: Date
+    let meeting: CalendarMeeting
+    @EnvironmentObject private var store: DataStore
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var outcome: MeetingOutcome
+    @State private var reason = ""
+    @State private var enhancing = false
+    @State private var enhanceError: String?
+
+    private let absenceOutcomes: [MeetingOutcome] = [.didNotAttend, .didNotHappen]
+
+    init(day: Date, meeting: CalendarMeeting, initialOutcome: MeetingOutcome) {
+        self.day = day
+        self.meeting = meeting
+        _outcome = State(initialValue: initialOutcome)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Image(systemName: "person.crop.circle.badge.xmark")
+                    .font(.title2).foregroundStyle(.white)
+                    .frame(width: 40, height: 40)
+                    .background(.orange, in: RoundedRectangle(cornerRadius: 10))
+                VStack(alignment: .leading) {
+                    Text(meeting.title).font(.headline).lineLimit(2)
+                    Text("Record why you weren't there")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Picker("Outcome", selection: $outcome) {
+                ForEach(absenceOutcomes) { option in
+                    Text(option.label).tag(option)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(outcome == .didNotAttend
+                     ? "Why didn't you attend? (optional)"
+                     : "Why didn't it happen? (optional)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                SpellCheckTextEditor(text: $reason)
+                    .frame(height: 76)
+                    .padding(4)
+                    .background(Color(nsColor: .textBackgroundColor),
+                                in: RoundedRectangle(cornerRadius: 6))
+                    .overlay(RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color(nsColor: .separatorColor)))
+            }
+            EnhanceButton(
+                enhancing: enhancing,
+                error: enhanceError,
+                canRun: !reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                action: enhance
+            )
+
+            HStack {
+                Spacer()
+                Button("Cancel", role: .cancel) { dismiss() }
+                Button("Save") {
+                    store.addMeeting(eventID: meeting.id, title: meeting.title,
+                                     outcome: outcome, absenceReason: reason, on: day)
+                    dismiss()
+                }
+                .keyboardShortcut(.defaultAction)
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding(20)
+        .frame(width: 440)
+    }
+
+    private func enhance() {
+        enhanceError = nil
+        enhancing = true
+        let snapshot = EntryText(title: "", detail: reason, wentWell: "", wentBad: "")
+        Task {
+            do {
+                reason = try await EnhancementService.enhance(snapshot).detail
+            } catch {
+                enhanceError = error.localizedDescription
+            }
+            enhancing = false
+        }
+    }
+}
+
 /// Compact row for a logged meeting reflection in the day list.
 struct MeetingRow: View {
     let entry: ReportEntry
@@ -193,7 +344,7 @@ struct MeetingRow: View {
     @EnvironmentObject private var store: DataStore
     @State private var hovering = false
 
-    private var happened: Bool { entry.happened ?? true }
+    private var outcome: MeetingOutcome { entry.resolvedMeetingOutcome }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -209,8 +360,14 @@ struct MeetingRow: View {
                         ProjectChip(name: project)
                     }
                 }
-                if !happened {
-                    Text("Didn't happen").font(.caption).foregroundStyle(.secondary)
+                if outcome != .attended {
+                    Text(outcome.label).font(.caption).foregroundStyle(.secondary)
+                    if let reason = entry.absenceReason, !reason.isEmpty {
+                        Text("Reason: \(reason)")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
                 } else {
                     HStack(spacing: 10) {
                         if let m = entry.mood {

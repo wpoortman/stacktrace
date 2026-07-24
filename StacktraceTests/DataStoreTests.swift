@@ -43,6 +43,30 @@ final class DataStoreTests: XCTestCase {
         XCTAssertEqual(withMood?.mood, 3)
     }
 
+    func testMeetingAbsenceReasonIsStored() {
+        let store = makeStore()
+        store.addMeeting(eventID: "planning", title: "Planning",
+                         outcome: .didNotAttend,
+                         absenceReason: "Had a conflicting appointment",
+                         on: Date())
+
+        let meeting = store.entries(on: Date()).first
+        XCTAssertEqual(meeting?.resolvedMeetingOutcome, .didNotAttend)
+        XCTAssertEqual(meeting?.absenceReason, "Had a conflicting appointment")
+        XCTAssertEqual(meeting?.happened, false)
+        XCTAssertNil(meeting?.mood)
+        XCTAssertEqual(meeting?.wentWell, "")
+        XCTAssertEqual(meeting?.wentBad, "")
+    }
+
+    func testLegacyMissedMeetingResolvesAsDidNotHappen() {
+        var meeting = ReportEntry(date: Date())
+        meeting.eventID = "legacy"
+        meeting.happened = false
+
+        XCTAssertEqual(meeting.resolvedMeetingOutcome, .didNotHappen)
+    }
+
     func testDeleteEntry() {
         let store = makeStore()
         let e = ReportEntry(date: Date())

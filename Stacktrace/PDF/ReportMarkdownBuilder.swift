@@ -51,8 +51,13 @@ enum ReportMarkdownBuilder {
                     let i = max(1, min(5, m)) - 1
                     out += "- \(moodEmoji[i]) Felt \(["rough", "tough", "okay", "good", "great"][i])\(proj)\n"
                 } else if entry.isMeeting {
-                    let tag = (entry.happened ?? true) ? "" : " (didn't happen)"
+                    let outcome = entry.resolvedMeetingOutcome
+                    let tag = outcome == .attended ? "" : " (\(outcome.label.lowercased()))"
                     out += "\n### 📅 \(entry.title.isEmpty ? "Meeting" : entry.title)\(tag)\(proj)\n"
+                    if outcome != .attended,
+                       let reason = entry.absenceReason, !reason.isEmpty {
+                        out += "- Reason: \(reason)\n"
+                    }
                     out += reflection(entry)
                 } else {
                     out += "\n### \(entry.title.isEmpty ? "Untitled" : entry.title)\(proj)\n"

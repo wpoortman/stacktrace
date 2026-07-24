@@ -167,7 +167,10 @@ enum ReportHTMLBuilder {
 
         if entry.isMeeting {
             let name = (entry.title.isEmpty ? "Meeting" : entry.title).htmlEscaped
-            let tag = (entry.happened ?? true) ? "Meeting" : "Meeting (didn't happen)"
+            let outcome = entry.resolvedMeetingOutcome
+            let tag = outcome == .attended
+                ? "Meeting"
+                : "Meeting (\(outcome.label.lowercased()))"
             parts += "<h3>📅 \(name) <span class=\"meeting-tag\">\(tag)</span>\(projectTag)</h3>"
         } else {
             let title = entry.title.isEmpty ? "Untitled" : entry.title
@@ -180,6 +183,11 @@ enum ReportHTMLBuilder {
                 parts += "<span class=\"tag\">\(tag.htmlEscaped)</span>"
             }
             parts += "</div>"
+        }
+
+        if entry.isMeeting, entry.resolvedMeetingOutcome != .attended,
+           let reason = entry.absenceReason, !reason.isEmpty {
+            parts += block(label: "Reason", text: reason, cls: "absence")
         }
 
         if let mood = entry.mood {
@@ -279,6 +287,8 @@ enum ReportHTMLBuilder {
     .note.well .note-label { color: #2b50b5; }
     .note.bad { background: #fdf0e8; }
     .note.bad .note-label { color: #b5530f; }
+    .note.absence { background: #f8f0e6; }
+    .note.absence .note-label { color: #9b5c18; }
     .empty { color: #6e6e73; font-style: italic; }
     .summary { margin: 0 0 22px; padding: 12px 14px; background: #f5f7fb;
       border-left: 3px solid #3a3a8c; border-radius: 6px; }

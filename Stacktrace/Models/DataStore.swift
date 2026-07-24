@@ -1,5 +1,21 @@
 import Foundation
 
+enum MeetingOutcome: String, Codable, CaseIterable, Identifiable {
+    case attended
+    case didNotAttend
+    case didNotHappen
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .attended: return "Attended"
+        case .didNotAttend: return "Didn't attend"
+        case .didNotHappen: return "Didn't happen"
+        }
+    }
+}
+
 /// One reported item for a single day. Plain value type, JSON-serialized.
 struct ReportEntry: Identifiable, Codable, Equatable {
     var id: UUID = UUID()
@@ -25,6 +41,10 @@ struct ReportEntry: Identifiable, Codable, Equatable {
     /// Set for a meeting reflection sourced from the calendar.
     var eventID: String?
     var happened: Bool?
+    /// Explicit outcome for newer meeting logs. Older data falls back to
+    /// `happened`, preserving the original "didn't happen" meaning.
+    var meetingOutcome: MeetingOutcome?
+    var absenceReason: String?
     /// Optional link to a Project.
     var projectID: UUID?
     var createdAt: Date = Date()
@@ -32,6 +52,10 @@ struct ReportEntry: Identifiable, Codable, Equatable {
     var isQuick: Bool { quickKind != nil }
     var isExercise: Bool { exercise != nil }
     var isMeeting: Bool { eventID != nil }
+
+    var resolvedMeetingOutcome: MeetingOutcome {
+        meetingOutcome ?? ((happened ?? true) ? .attended : .didNotHappen)
+    }
 
     /// A one-tap mood check-in: carries only a mood, no text or tags.
     var isCheckin: Bool {
@@ -392,15 +416,19 @@ final class DataStore: ObservableObject {
     }
 
     /// Log a meeting reflection sourced from the calendar.
-    func addMeeting(eventID: String, title: String, happened: Bool,
-                    wentWell: String, wentBad: String, mood: Int?, on day: Date) {
+    func addMeeting(eventID: String, title: String, outcome: MeetingOutcome,
+                    absenceReason: String = "", wentWell: String = "",
+                    wentBad: String = "", mood: Int? = nil, on day: Date) {
         var e = ReportEntry(date: day)
         e.eventID = eventID
         e.title = title
-        e.happened = happened
-        e.wentWell = wentWell
-        e.wentBad = wentBad
-        e.mood = mood
+        e.meetingOutcome = outcome
+        e.happened = outcome == .attended
+        let reason = absenceReason.trimmingCharacters(in: .whitespacesAndNewlines)
+        e.absenceReason = reason.isEmpty ? nil : reason
+        e.wentWell = outcome == .attended ? wentWell : ""
+        e.wentBad = outcome == .attended ? wentBad : ""
+        e.mood = outcome == .attended ? mood : nil
         upsert(e)
     }
 

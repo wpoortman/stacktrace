@@ -180,14 +180,15 @@ struct CheckinEditSheet: View {
     }
 }
 
-/// Edit a meeting reflection: whether it happened, mood, and notes.
+/// Edit a meeting reflection, including missed/cancelled outcomes and reasons.
 struct MeetingEditSheet: View {
     @EnvironmentObject private var store: DataStore
     @Environment(\.dismiss) private var dismiss
 
     @State private var entry: ReportEntry
     @State private var title: String
-    @State private var happened: Bool
+    @State private var outcome: MeetingOutcome
+    @State private var absenceReason: String
     @State private var mood: Int?
     @State private var wentWell: String
     @State private var wentBad: String
@@ -197,7 +198,8 @@ struct MeetingEditSheet: View {
     init(entry: ReportEntry) {
         _entry = State(initialValue: entry)
         _title = State(initialValue: entry.title)
-        _happened = State(initialValue: entry.happened ?? true)
+        _outcome = State(initialValue: entry.resolvedMeetingOutcome)
+        _absenceReason = State(initialValue: entry.absenceReason ?? "")
         _mood = State(initialValue: entry.mood)
         _wentWell = State(initialValue: entry.wentWell)
         _wentBad = State(initialValue: entry.wentBad)
@@ -208,20 +210,36 @@ struct MeetingEditSheet: View {
           && wentBad.trimmingCharacters(in: .whitespaces).isEmpty)
     }
 
+    private var canEnhance: Bool {
+        outcome == .attended
+            ? hasNotes
+            : !absenceReason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Edit meeting").font(.title3.bold())
 
             TextField("Meeting", text: $title).textFieldStyle(.roundedBorder)
-            Toggle("It happened", isOn: $happened)
+            Picker("Outcome", selection: $outcome) {
+                ForEach(MeetingOutcome.allCases) { option in
+                    Text(option.label).tag(option)
+                }
+            }
+            .pickerStyle(.segmented)
 
-            if happened {
+            if outcome == .attended {
                 MoodPicker(mood: $mood)
                 field("What went well", text: $wentWell)
                 field("What didn't / to improve", text: $wentBad)
-                EnhanceButton(enhancing: enhancing, error: enhanceError,
-                              canRun: hasNotes, action: enhance)
+            } else {
+                field(outcome == .didNotAttend
+                      ? "Why didn't you attend? (optional)"
+                      : "Why didn't it happen? (optional)",
+                      text: $absenceReason)
             }
+            EnhanceButton(enhancing: enhancing, error: enhanceError,
+                          canRun: canEnhance, action: enhance)
 
             EditorButtons(entry: entry, canSave: true, onSave: save)
         }
@@ -243,10 +261,13 @@ struct MeetingEditSheet: View {
 
     private func save() {
         entry.title = title.trimmingCharacters(in: .whitespaces)
-        entry.happened = happened
-        entry.mood = happened ? mood : nil
-        entry.wentWell = happened ? wentWell : ""
-        entry.wentBad = happened ? wentBad : ""
+        entry.meetingOutcome = outcome
+        entry.happened = outcome == .attended
+        entry.mood = outcome == .attended ? mood : nil
+        entry.wentWell = outcome == .attended ? wentWell : ""
+        entry.wentBad = outcome == .attended ? wentBad : ""
+        let reason = absenceReason.trimmingCharacters(in: .whitespacesAndNewlines)
+        entry.absenceReason = outcome == .attended || reason.isEmpty ? nil : reason
         store.upsert(entry)
         dismiss()
     }
@@ -254,12 +275,18 @@ struct MeetingEditSheet: View {
     private func enhance() {
         enhanceError = nil
         enhancing = true
-        let snapshot = EntryText(title: "", detail: "", wentWell: wentWell, wentBad: wentBad)
+        let snapshot = outcome == .attended
+            ? EntryText(title: "", detail: "", wentWell: wentWell, wentBad: wentBad)
+            : EntryText(title: "", detail: absenceReason, wentWell: "", wentBad: "")
         Task {
             do {
                 let result = try await EnhancementService.enhance(snapshot)
-                wentWell = result.wentWell
-                wentBad = result.wentBad
+                if outcome == .attended {
+                    wentWell = result.wentWell
+                    wentBad = result.wentBad
+                } else {
+                    absenceReason = result.detail
+                }
             } catch {
                 enhanceError = error.localizedDescription
             }

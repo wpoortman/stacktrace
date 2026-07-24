@@ -30,6 +30,25 @@ final class BuilderTests: XCTestCase {
         XCTAssertTrue(md.contains("🎉 Fixed the bug"))
     }
 
+    func testMissedMeetingReasonAppearsInExports() {
+        var meeting = ReportEntry(date: Date())
+        meeting.eventID = "planning"
+        meeting.title = "Planning"
+        meeting.happened = false
+        meeting.meetingOutcome = .didNotAttend
+        meeting.absenceReason = "Overlapping customer call"
+
+        let html = ReportHTMLBuilder.html(entries: [meeting], from: Date(), to: Date())
+        XCTAssertTrue(html.contains("Meeting (didn't attend)"))
+        XCTAssertTrue(html.contains("Reason"))
+        XCTAssertTrue(html.contains("Overlapping customer call"))
+
+        let markdown = ReportMarkdownBuilder.markdown(
+            entries: [meeting], from: Date(), to: Date())
+        XCTAssertTrue(markdown.contains("Planning (didn't attend)"))
+        XCTAssertTrue(markdown.contains("- Reason: Overlapping customer call"))
+    }
+
     func testEmptyPeriod() {
         let html = ReportHTMLBuilder.html(entries: [], from: Date(), to: Date())
         XCTAssertTrue(html.contains("No entries"))
